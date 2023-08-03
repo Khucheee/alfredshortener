@@ -5,10 +5,11 @@ import (
 	"net/http"
 )
 
+const slash string = "/"
+
 func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", app.SalamPost)
-	mux.HandleFunc("/5k2tWE6P7gjtwJPch8rjZo9JcKzNBSeP1FuAQZGK/", app.Salamget)
 	err := http.ListenAndServe("localhost:8080", mux)
 	if err != nil {
 		panic(err)
