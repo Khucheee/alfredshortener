@@ -36,8 +36,11 @@ func TestSolvePost(t *testing.T) {
 			SolveRequest(w, request)
 
 			res := w.Result()
-			resBody, _ := io.ReadAll(res.Body)
-
+			resBody, err := io.ReadAll(res.Body)
+			if err != nil {
+				panic(err)
+			}
+			defer res.Body.Close()
 			assert.Equal(t, test.want.code, res.StatusCode)
 			assert.Equal(t, test.want.response, string(resBody))
 			assert.Equal(t, test.want.contentType, res.Header.Get("Content-Type"))
@@ -70,6 +73,7 @@ func TestSolveGet(t *testing.T) {
 			w := httptest.NewRecorder()
 			SolveRequest(w, requestget)
 			res := w.Result()
+			defer res.Body.Close()
 			assert.Equal(t, test.want.code, res.StatusCode)
 			assert.Equal(t, test.want.location, res.Header.Get("Location"))
 		})
