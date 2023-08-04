@@ -1,6 +1,8 @@
 package app
 
 import (
+	"context"
+	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
 	"io"
 	"net/http"
@@ -33,14 +35,12 @@ func TestSolvePost(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("https://neal.fun/deep-sea/"))
 			w := httptest.NewRecorder()
-			SolveRequest(w, request)
+			SolvePost(w, request)
 
 			res := w.Result()
-			resBody, err := io.ReadAll(res.Body)
-			if err != nil {
-				panic(err)
-			}
-			defer res.Body.Close()
+			resBody, _ := io.ReadAll(res.Body)
+			res.Body.Close()
+
 			assert.Equal(t, test.want.code, res.StatusCode)
 			assert.Equal(t, test.want.response, string(resBody))
 			assert.Equal(t, test.want.contentType, res.Header.Get("Content-Type"))
@@ -58,25 +58,24 @@ func TestSolveGet(t *testing.T) {
 	tests := []struct {
 		name string
 		want want
-	}{{
-		name: "Check get positive",
-		want: want{
-			code:     307,
-			location: "https://neal.fun/deep-sea/",
-			path:     "/4CWoMo83vssWiq4zcx51eCiTMVVH7yFaB1ft",
-		},
-	},
-	}
+	}{{name: "Check get positive",
+		want: want{code: 307, location: "https://neal.fun/deep-sea/", path: "/4CWoMo83vssWiq4zcx51eCiTMVVH7yFaB1ft"}}}
+
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			requestget := httptest.NewRequest(http.MethodGet, test.want.path, nil)
+
+			req := httptest.NewRequest(http.MethodGet, test.want.path, nil)
 			w := httptest.NewRecorder()
-			SolveRequest(w, requestget)
+
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("shorturl", "4CWoMo83vssWiq4zcx51eCiTMVVH7yFaB1ft")
+			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+			SolveGet(w, req)
 			res := w.Result()
-			defer res.Body.Close()
+			res.Body.Close()
 			assert.Equal(t, test.want.code, res.StatusCode)
 			assert.Equal(t, test.want.location, res.Header.Get("Location"))
 		})
 	}
-
 }

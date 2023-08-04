@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/btcsuite/btcutil v1.0.2
+	github.com/go-chi/chi v1.5.4
 	github.com/stretchr/testify v1.8.4
 )
 
