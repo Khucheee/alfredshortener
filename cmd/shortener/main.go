@@ -7,6 +7,7 @@ import (
 )
 
 func main() {
+
 	r := chi.NewRouter()
 	r.Route("/", func(r chi.Router) {
 		r.Post("/", app.SolvePost)

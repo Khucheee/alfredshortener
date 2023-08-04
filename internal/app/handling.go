@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 )
-
 func SolvePost(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
