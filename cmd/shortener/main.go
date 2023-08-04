@@ -12,7 +12,6 @@ func main() {
 		r.Post("/", app.SolvePost)
 		r.Get("/{shorturl}", app.SolveGet)
 	})
-
 	err := http.ListenAndServe("localhost:8080", r)
 	if err != nil {
 		panic(err)
