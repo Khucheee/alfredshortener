@@ -8,7 +8,7 @@ func SetHost() *string {
 	return Host
 }
 func setAddress() *string {
-	Address := flag.String("address", "http://localhost:8080", "for response")
+	Address := flag.String("address", "http://localhost:8080/", "for response")
 	flag.Parse()
 	return Address
 }
