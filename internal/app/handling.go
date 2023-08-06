@@ -6,12 +6,13 @@ import (
 	"io"
 	"net/http"
 )
+
 func SolvePost(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
 	reqBody, _ := io.ReadAll(r.Body)
 	defer r.Body.Close()
-	respBody := "http://localhost:8080/" + base58.Encode(reqBody)
+	respBody := responseaddress + base58.Encode(reqBody)
 	w.Write([]byte(respBody))
 }
 func SolveGet(w http.ResponseWriter, r *http.Request) {
