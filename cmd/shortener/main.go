@@ -7,12 +7,13 @@ import (
 )
 
 func main() {
+	config := new(app.Configure)
+	config.ParseFlags()
+	controller := app.NewBaseController(*config)
 	r := chi.NewRouter()
-	r.Route("/", func(r chi.Router) {
-		r.Post("/", app.SolvePost)
-		r.Get("/{shorturl}", app.SolveGet)
-	})
-	err := http.ListenAndServe(*app.SetHost(), r)
+	r.Mount("/", controller.Route())
+
+	err := http.ListenAndServe(config.Host, r)
 	if err != nil {
 		panic(err)
 	}

@@ -1,14 +1,16 @@
 package app
 
-import "flag"
+import (
+	"flag"
+)
 
-func SetHost() *string {
-	Host := flag.String("host", "localhost:8080", "for listenandserve")
-
-	return Host
+type Configure struct {
+	Host    string
+	Address string
 }
-func setAddress() *string {
-	Address := flag.String("address", "http://localhost:8080/", "for response")
+
+func (c *Configure) ParseFlags() {
+	flag.StringVar(&c.Host, "host", "localhost:8080", "for listenandserve")
+	flag.StringVar(&c.Address, "address", "http://localhost:8080/", "for response")
 	flag.Parse()
-	return Address
 }

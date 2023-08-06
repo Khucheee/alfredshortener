@@ -32,10 +32,12 @@ func TestSolvePost(t *testing.T) {
 	},
 	}
 	for _, test := range tests {
+		cfg := Configure{"localhost:8080", "http://localhost:8080/"}
+		controller := NewBaseController(cfg)
 		t.Run(test.name, func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("https://neal.fun/deep-sea/"))
 			w := httptest.NewRecorder()
-			SolvePost(w, request)
+			controller.solvePost(w, request)
 
 			res := w.Result()
 			resBody, _ := io.ReadAll(res.Body)
@@ -62,6 +64,8 @@ func TestSolveGet(t *testing.T) {
 		want: want{code: 307, location: "https://neal.fun/deep-sea/", path: "/4CWoMo83vssWiq4zcx51eCiTMVVH7yFaB1ft"}}}
 
 	for _, test := range tests {
+		cfg := Configure{"localhost:8080", "http://localhost:8080"}
+		controller := NewBaseController(cfg)
 		t.Run(test.name, func(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodGet, test.want.path, nil)
@@ -71,7 +75,7 @@ func TestSolveGet(t *testing.T) {
 			rctx.URLParams.Add("shorturl", "4CWoMo83vssWiq4zcx51eCiTMVVH7yFaB1ft")
 			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
-			SolveGet(w, req)
+			controller.solveGet(w, req)
 			res := w.Result()
 			res.Body.Close()
 			assert.Equal(t, test.want.code, res.StatusCode)
