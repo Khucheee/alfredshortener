@@ -7,13 +7,12 @@ import (
 )
 
 func main() {
-	app.SetFlags()
 	r := chi.NewRouter()
 	r.Route("/", func(r chi.Router) {
 		r.Post("/", app.SolvePost)
 		r.Get("/{shorturl}", app.SolveGet)
 	})
-	err := http.ListenAndServe(*app.Host, r)
+	err := http.ListenAndServe(*app.SetHost(), r)
 	if err != nil {
 		panic(err)
 	}

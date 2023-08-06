@@ -12,7 +12,7 @@ func SolvePost(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	reqBody, _ := io.ReadAll(r.Body)
 	defer r.Body.Close()
-	respBody := responseaddress + base58.Encode(reqBody)
+	respBody := *setAddress() + base58.Encode(reqBody)
 	w.Write([]byte(respBody))
 }
 func SolveGet(w http.ResponseWriter, r *http.Request) {
