@@ -11,18 +11,19 @@ type Configure struct {
 }
 
 func (c *Configure) SetConfig() {
+
+	flag.StringVar(&c.Host, "a", "localhost:8080", "for listenandserve")
+	flag.StringVar(&c.Address, "b", "http://localhost:8080", "for response")
+	flag.Parse()
+
 	serverAddress, isexist := os.LookupEnv("SERVER_ADDRESS")
 	if isexist {
 		c.Host = serverAddress
-	} else {
-		flag.StringVar(&c.Host, "a", "localhost:8080", "for listenandserve")
 	}
-	baseUrl, isexist := os.LookupEnv("BASE_URL")
+	baseURL, isexist := os.LookupEnv("BASE_URL")
 	if isexist {
-		c.Address = baseUrl
-	} else {
-		flag.StringVar(&c.Address, "b", "http://localhost:8080", "for response")
+		c.Address = baseURL
 	}
-	flag.Parse()
 	c.Address += "/"
+
 }
