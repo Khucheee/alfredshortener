@@ -8,7 +8,7 @@ import (
 
 func main() {
 	config := new(app.Configure)
-	config.ParseFlags()
+	config.SetConfig()
 	controller := app.NewBaseController(*config)
 	r := chi.NewRouter()
 	r.Mount("/", controller.Route())
