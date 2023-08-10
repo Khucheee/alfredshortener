@@ -16,7 +16,7 @@ func (b *BaseController) addURL(shorturl, url string) { //добавляем з�
 	b.urls[shorturl] = url
 }
 func (b *BaseController) searchURL(shorturl string) string { //ищем значение в мапе, если ""то не нашли
-	url, _ := b.urls[shorturl]
+	url := b.urls[shorturl]
 	return url
 }
 
