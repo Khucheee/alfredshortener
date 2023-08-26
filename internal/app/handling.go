@@ -1,6 +1,8 @@
 package app
 
 import (
+	"bytes"
+	"encoding/json"
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/go-chi/chi"
 	"io"
@@ -12,6 +14,12 @@ type BaseController struct {
 	config Configure
 	urls   map[string]string //мапа содержит сокращенный урл и полный
 	logger Logger
+}
+type Jsonquery struct {
+	Url string
+}
+type Jsonresponse struct {
+	Shorturl string `json:"resoult"`
 }
 
 func (b *BaseController) addURL(shorturl, url string) { //добавляем значение в мапу
@@ -34,8 +42,9 @@ func NewBaseController(c Configure, l Logger) *BaseController {
 func (b *BaseController) Route() *chi.Mux {
 	r := chi.NewRouter()
 	r.Route("/", func(r chi.Router) {
-		r.Post("/", b.WithLogging(b.solvePost()))
-		r.Get("/{shorturl}", b.WithLogging(b.solveGet()))
+		r.Post("/", b.WithLogging(b.solvePost))
+		r.Get("/{shorturl}", b.WithLogging(b.solveGet))
+		r.Post("/api/shorten", b.WithLogging(b.solveJson))
 	})
 	return r
 }
@@ -57,29 +66,43 @@ func (b *BaseController) WithLogging(h http.HandlerFunc) http.HandlerFunc {
 	return logfn
 }
 
-func (b *BaseController) solvePost() http.HandlerFunc {
-	fn := func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusCreated)
-		reqBody, _ := io.ReadAll(r.Body)
-		reqBodyEncoded := base58.Encode(reqBody)
+func (b *BaseController) solvePost(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(http.StatusCreated)
+	reqBody, _ := io.ReadAll(r.Body)
+	reqBodyEncoded := base58.Encode(reqBody)
 
-		defer r.Body.Close()
-		respBody := b.config.Address + reqBodyEncoded
-		w.Write([]byte(respBody))
-		b.addURL(reqBodyEncoded, string(reqBody))
-	}
-	return fn
+	defer r.Body.Close()
+	respBody := b.config.Address + reqBodyEncoded
+	w.Write([]byte(respBody))
+	b.addURL(reqBodyEncoded, string(reqBody))
 }
 
-func (b *BaseController) solveGet() http.HandlerFunc {
-	fn := func(w http.ResponseWriter, r *http.Request) {
-		if b.searchURL(chi.URLParam(r, "shorturl")) == "" { //если ключ в мапе пустой, то 400
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		w.Header().Set("Location", b.urls[chi.URLParam(r, "shorturl")]) //если дошли до сюда, то в location суем значение из мапы по ключу
-		w.WriteHeader(http.StatusTemporaryRedirect)
+func (b *BaseController) solveGet(w http.ResponseWriter, r *http.Request) {
+	if b.searchURL(chi.URLParam(r, "shorturl")) == "" { //если ключ в мапе пустой, то 400
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
-	return fn
+	w.Header().Set("Location", b.urls[chi.URLParam(r, "shorturl")]) //если дошли до сюда, то в location суем значение из мапы по ключу
+	w.WriteHeader(http.StatusTemporaryRedirect)
+}
+
+func (b *BaseController) solveJson(w http.ResponseWriter, r *http.Request) {
+	var jsonquery Jsonquery
+	var jsonresponse Jsonresponse
+	var buf bytes.Buffer
+	_, err := buf.ReadFrom(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if err = json.Unmarshal(buf.Bytes(), &jsonquery); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	jsonresponse.Shorturl = b.config.Address + base58.Encode([]byte(jsonquery.Url))
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	resp, _ := json.Marshal(jsonresponse)
+	w.Write(resp)
 }

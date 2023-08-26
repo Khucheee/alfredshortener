@@ -16,7 +16,6 @@ func TestSolvePost(t *testing.T) {
 		code        int
 		response    string
 		contentType string
-		location    string
 	}
 	tests := []struct {
 		name string
@@ -27,7 +26,6 @@ func TestSolvePost(t *testing.T) {
 			code:        201,
 			response:    "http://localhost:8080/4CWoMo83vssWiq4zcx51eCiTMVVH7yFaB1ft",
 			contentType: "text/plain",
-			location:    "",
 		},
 	},
 	}
@@ -38,8 +36,7 @@ func TestSolvePost(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("https://neal.fun/deep-sea/"))
 			w := httptest.NewRecorder()
-			fn := controller.solvePost()
-			fn(w, request)
+			controller.solvePost(w, request)
 
 			res := w.Result()
 			resBody, _ := io.ReadAll(res.Body)
@@ -48,7 +45,6 @@ func TestSolvePost(t *testing.T) {
 			assert.Equal(t, test.want.code, res.StatusCode)
 			assert.Equal(t, test.want.response, string(resBody))
 			assert.Equal(t, test.want.contentType, res.Header.Get("Content-Type"))
-			assert.Equal(t, test.want.location, res.Header.Get("Location"))
 		})
 	}
 
@@ -91,8 +87,8 @@ func TestSolveGet(t *testing.T) {
 
 			req1 := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(test.body))
 			w1 := httptest.NewRecorder()
-			fn := controller.solvePost()
-			fn(w1, req1)
+			controller.solvePost(w1, req1)
+
 			req2 := httptest.NewRequest(http.MethodGet, test.want.path, nil)
 			w2 := httptest.NewRecorder()
 
@@ -100,12 +96,49 @@ func TestSolveGet(t *testing.T) {
 			rctx.URLParams.Add("shorturl", test.want.path[1:])
 			req2 = req2.WithContext(context.WithValue(req2.Context(), chi.RouteCtxKey, rctx))
 
-			fnt := controller.solveGet()
-			fnt(w2, req2)
+			controller.solveGet(w2, req2)
+
 			res := w2.Result()
 			res.Body.Close()
 			assert.Equal(t, test.want.code, res.StatusCode)
 			assert.Equal(t, test.want.location, res.Header.Get("Location"))
+		})
+	}
+}
+func TestSolveJson(t *testing.T) {
+	type want struct {
+		code        int
+		response    string
+		contentType string
+	}
+	tests := []struct {
+		name string
+		want want
+	}{{
+		name: "Check post",
+		want: want{
+			code:        201,
+			response:    "{\"resoult\":\"http://localhost:8080/4CWoMo83vssWiq4zcx51eCiTMVVH7yFaB1ft\"}",
+			contentType: "application/json",
+		},
+	},
+	}
+	for _, test := range tests {
+		cfg := Configure{"localhost:8080", "http://localhost:8080/"}
+		lg := Logger{}
+		controller := NewBaseController(cfg, lg)
+		t.Run(test.name, func(t *testing.T) {
+			request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("{\"url\":\"https://neal.fun/deep-sea/\"}"))
+			w := httptest.NewRecorder()
+			controller.solveJson(w, request)
+
+			res := w.Result()
+			resBody, _ := io.ReadAll(res.Body)
+			res.Body.Close()
+
+			assert.Equal(t, test.want.code, res.StatusCode)
+			assert.Equal(t, test.want.response, string(resBody))
+			assert.Equal(t, test.want.contentType, res.Header.Get("Content-Type"))
 		})
 	}
 }
