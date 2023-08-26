@@ -19,7 +19,7 @@ type Jsonquery struct {
 	URL string
 }
 type Jsonresponse struct {
-	Response string `json:"resoult"`
+	Response string `json:"result"`
 }
 
 func (b *BaseController) addURL(shorturl, url string) { //добавляем значение в мапу
@@ -61,7 +61,8 @@ func (b *BaseController) WithLogging(h http.HandlerFunc) http.HandlerFunc {
 			"duration", duration,
 			"method", r.Method,
 			"status", responseData.status,
-			"size", responseData.size)
+			"size", responseData.size,
+			"storage", b.urls)
 	}
 	return logfn
 }
