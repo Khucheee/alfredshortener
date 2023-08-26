@@ -118,7 +118,7 @@ func TestSolveJson(t *testing.T) {
 		name: "Check post",
 		want: want{
 			code:        201,
-			response:    "{\"resoult\":\"http://localhost:8080/4CWoMo83vssWiq4zcx51eCiTMVVH7yFaB1ft\"}",
+			response:    "{\"result\":\"http://localhost:8080/4CWoMo83vssWiq4zcx51eCiTMVVH7yFaB1ft\"}",
 			contentType: "application/json",
 		},
 	},
