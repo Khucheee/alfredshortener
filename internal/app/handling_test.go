@@ -130,7 +130,7 @@ func TestSolveJson(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("{\"url\":\"https://neal.fun/deep-sea/\"}"))
 			w := httptest.NewRecorder()
-			controller.solveJson(w, request)
+			controller.solveJSON(w, request)
 
 			res := w.Result()
 			resBody, _ := io.ReadAll(res.Body)

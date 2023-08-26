@@ -16,10 +16,10 @@ type BaseController struct {
 	logger Logger
 }
 type Jsonquery struct {
-	Url string
+	URL string
 }
 type Jsonresponse struct {
-	Shorturl string `json:"resoult"`
+	Response string `json:"resoult"`
 }
 
 func (b *BaseController) addURL(shorturl, url string) { //добавляем значение в мапу
@@ -44,7 +44,7 @@ func (b *BaseController) Route() *chi.Mux {
 	r.Route("/", func(r chi.Router) {
 		r.Post("/", b.WithLogging(b.solvePost))
 		r.Get("/{shorturl}", b.WithLogging(b.solveGet))
-		r.Post("/api/shorten", b.WithLogging(b.solveJson))
+		r.Post("/api/shorten", b.WithLogging(b.solveJSON))
 	})
 	return r
 }
@@ -71,7 +71,6 @@ func (b *BaseController) solvePost(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	reqBody, _ := io.ReadAll(r.Body)
 	reqBodyEncoded := base58.Encode(reqBody)
-
 	defer r.Body.Close()
 	respBody := b.config.Address + reqBodyEncoded
 	w.Write([]byte(respBody))
@@ -87,10 +86,11 @@ func (b *BaseController) solveGet(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusTemporaryRedirect)
 }
 
-func (b *BaseController) solveJson(w http.ResponseWriter, r *http.Request) {
+func (b *BaseController) solveJSON(w http.ResponseWriter, r *http.Request) {
 	var jsonquery Jsonquery
 	var jsonresponse Jsonresponse
 	var buf bytes.Buffer
+	var shorturl string
 	_, err := buf.ReadFrom(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -100,9 +100,11 @@ func (b *BaseController) solveJson(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	jsonresponse.Shorturl = b.config.Address + base58.Encode([]byte(jsonquery.Url))
+	shorturl = base58.Encode([]byte(jsonquery.URL))
+	jsonresponse.Response = b.config.Address + shorturl
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	resp, _ := json.Marshal(jsonresponse)
 	w.Write(resp)
+	b.addURL(shorturl, jsonquery.URL)
 }
