@@ -15,6 +15,7 @@ func main() {
 
 	controller := app.NewBaseController(*config, *logger)
 	r := chi.NewRouter()
+
 	r.Mount("/", controller.Route())
 
 	err := http.ListenAndServe(config.Host, r)

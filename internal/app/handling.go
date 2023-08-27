@@ -7,6 +7,7 @@ import (
 	"github.com/go-chi/chi"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -42,9 +43,9 @@ func NewBaseController(c Configure, l Logger) *BaseController {
 func (b *BaseController) Route() *chi.Mux {
 	r := chi.NewRouter()
 	r.Route("/", func(r chi.Router) {
-		r.Post("/", b.WithLogging(b.solvePost))
-		r.Get("/{shorturl}", b.WithLogging(b.solveGet))
-		r.Post("/api/shorten", b.WithLogging(b.solveJSON))
+		r.Post("/", gzipMiddleware(b.WithLogging(b.solvePost)))
+		r.Get("/{shorturl}", gzipMiddleware(b.WithLogging(b.solveGet)))
+		r.Post("/api/shorten", gzipMiddleware(b.WithLogging(b.solveJSON)))
 	})
 	return r
 }
@@ -108,4 +109,29 @@ func (b *BaseController) solveJSON(w http.ResponseWriter, r *http.Request) {
 	resp, _ := json.Marshal(jsonresponse)
 	w.Write(resp)
 	b.addURL(shorturl, jsonquery.URL)
+}
+
+func gzipMiddleware(h http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ow := w
+		acceptEncoding := r.Header.Get("Accept-Encoding")
+		supportsGzip := strings.Contains(acceptEncoding, "gzip")
+		if supportsGzip {
+			cw := newCompressWriter(w)
+			ow = cw
+			defer cw.Close()
+		}
+		contentEncoding := r.Header.Get("Content-Encoding")
+		sendsGzip := strings.Contains(contentEncoding, "gzip")
+		if sendsGzip {
+			cr, err := newCompressReader(r.Body)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			r.Body = cr
+			defer cr.Close()
+		}
+		h.ServeHTTP(ow, r)
+	}
 }
