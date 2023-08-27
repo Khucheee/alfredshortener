@@ -8,9 +8,14 @@ import (
 
 func main() {
 	config := new(app.Configure)
+	logger := new(app.Logger)
+
 	config.SetConfig()
-	controller := app.NewBaseController(*config)
+	logger.CreateLogger()
+
+	controller := app.NewBaseController(*config, *logger)
 	r := chi.NewRouter()
+
 	r.Mount("/", controller.Route())
 
 	err := http.ListenAndServe(config.Host, r)
