@@ -26,7 +26,7 @@ func main() {
 	for {
 		data, err = text.ReadBytes('\n')
 		if err != nil {
-			panic(err)
+			fmt.Println(err)
 		}
 		if len(data) == 0 {
 			break

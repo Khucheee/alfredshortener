@@ -97,11 +97,11 @@ func (b *BaseController) solvePost(w http.ResponseWriter, r *http.Request) {
 	data = append(data, '\n')
 	file, err := os.OpenFile(b.config.FilePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 	_, err = file.Write(data)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 	file.Close()
 	//запись в мапу
@@ -144,12 +144,12 @@ func (b *BaseController) solveJSON(w http.ResponseWriter, r *http.Request) {
 	j := JSONfile{UUID: strconv.Itoa(len(b.Urls) + 1), Shorturl: shorturl, Originalurl: jsonquery.URL}
 	data, err := json.Marshal(j)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 	data = append(data, '\n')
 	file, err := os.OpenFile(b.config.FilePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 	_, err = file.Write(data)
 	if err != nil {
