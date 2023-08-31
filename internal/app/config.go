@@ -26,9 +26,10 @@ func (c *Configure) SetConfig() {
 		c.Address = baseURL
 	}
 	c.Address += "/"
-	File, isexist := os.LookupEnv("BASE_URL")
+
+	File, isexist := os.LookupEnv("FILE_STORAGE_PATH")
 	if isexist {
-		c.Address = File
+		c.FilePath = File
 	}
 
 }
