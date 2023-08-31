@@ -3,17 +3,25 @@ package app
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/go-chi/chi"
 	"io"
 	"net/http"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 )
 
+type JSONfile struct {
+	Uuid         string `json:"uuid"`
+	Short_url    string `json:"short_url"`
+	Original_url string `json:"original_url"`
+}
 type BaseController struct {
 	config Configure
-	urls   map[string]string //мапа содержит сокращенный урл и полный
+	Urls   map[string]string //мапа содержит сокращенный урл и полный
 	logger Logger
 }
 type Jsonquery struct {
@@ -24,18 +32,18 @@ type Jsonresponse struct {
 }
 
 func (b *BaseController) addURL(shorturl, url string) { //добавляем значение в мапу
-	b.urls[shorturl] = url
+	b.Urls[shorturl] = url
 }
 
 func (b *BaseController) searchURL(shorturl string) string { //ищем значение в мапе, если ""то не нашли
-	url := b.urls[shorturl]
+	url := b.Urls[shorturl]
 	return url
 }
 
 func NewBaseController(c Configure, l Logger) *BaseController {
 	return &BaseController{
 		config: c,
-		urls:   make(map[string]string),
+		Urls:   make(map[string]string),
 		logger: l,
 	}
 }
@@ -63,7 +71,7 @@ func (b *BaseController) WithLogging(h http.HandlerFunc) http.HandlerFunc {
 			"method", r.Method,
 			"status", responseData.status,
 			"size", responseData.size,
-			"storage", b.urls)
+			"storage", b.Urls)
 	}
 	return logfn
 }
@@ -76,6 +84,24 @@ func (b *BaseController) solvePost(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	respBody := b.config.Address + reqBodyEncoded
 	w.Write([]byte(respBody))
+
+	//запись в файл
+	if b.config.FilePath == "" || b.searchURL(reqBodyEncoded) != "" {
+		return
+	}
+	j := JSONfile{Uuid: strconv.Itoa(len(b.Urls) + 1), Short_url: reqBodyEncoded, Original_url: string(reqBody)}
+	data, err := json.Marshal(j)
+	if err != nil {
+		panic(err)
+	}
+	data = append(data, '\n')
+	file, err := os.OpenFile(b.config.FilePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	_, err = file.Write(data)
+	if err != nil {
+		fmt.Println(err)
+	}
+	file.Close()
+	//запись в мапу
 	b.addURL(reqBodyEncoded, string(reqBody))
 }
 
@@ -84,7 +110,7 @@ func (b *BaseController) solveGet(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	w.Header().Set("Location", b.urls[chi.URLParam(r, "shorturl")]) //если дошли до сюда, то в location суем значение из мапы по ключу
+	w.Header().Set("Location", b.Urls[chi.URLParam(r, "shorturl")]) //если дошли до сюда, то в location суем значение из мапы по ключу
 	w.WriteHeader(http.StatusTemporaryRedirect)
 }
 
@@ -108,6 +134,22 @@ func (b *BaseController) solveJSON(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	resp, _ := json.Marshal(jsonresponse)
 	w.Write(resp)
+
+	if b.config.FilePath == "" || b.searchURL(shorturl) != "" {
+		return
+	}
+	j := JSONfile{Uuid: strconv.Itoa(len(b.Urls) + 1), Short_url: shorturl, Original_url: jsonquery.URL}
+	data, err := json.Marshal(j)
+	if err != nil {
+		panic(err)
+	}
+	data = append(data, '\n')
+	file, err := os.OpenFile(b.config.FilePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	_, err = file.Write(data)
+	if err != nil {
+		fmt.Println(err)
+	}
+	file.Close()
 	b.addURL(shorturl, jsonquery.URL)
 }
 

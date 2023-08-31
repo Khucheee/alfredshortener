@@ -30,7 +30,7 @@ func TestSolvePost(t *testing.T) {
 	},
 	}
 	for _, test := range tests {
-		cfg := Configure{"localhost:8080", "http://localhost:8080/"}
+		cfg := Configure{"localhost:8080", "http://localhost:8080/", ""}
 		lg := Logger{}
 		controller := NewBaseController(cfg, lg)
 		t.Run(test.name, func(t *testing.T) {
@@ -80,7 +80,7 @@ func TestSolveGet(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		cfg := Configure{"localhost:8080", "http://localhost:8080"}
+		cfg := Configure{"localhost:8080", "http://localhost:8080", "../../tmp/short-url-db.json"}
 		lg := Logger{}
 		controller := NewBaseController(cfg, lg)
 		t.Run(test.name, func(t *testing.T) {
@@ -124,7 +124,7 @@ func TestSolveJson(t *testing.T) {
 	},
 	}
 	for _, test := range tests {
-		cfg := Configure{"localhost:8080", "http://localhost:8080/"}
+		cfg := Configure{"localhost:8080", "http://localhost:8080/", ""}
 		lg := Logger{}
 		controller := NewBaseController(cfg, lg)
 		t.Run(test.name, func(t *testing.T) {
