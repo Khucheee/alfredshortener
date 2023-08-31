@@ -15,9 +15,9 @@ import (
 )
 
 type JSONfile struct {
-	Uuid         string `json:"uuid"`
-	Short_url    string `json:"short_url"`
-	Original_url string `json:"original_url"`
+	Uuid        string `json:"uuid"`
+	Shorturl    string `json:"short_url"`
+	Originalurl string `json:"original_url"`
 }
 type BaseController struct {
 	config Configure
@@ -89,7 +89,7 @@ func (b *BaseController) solvePost(w http.ResponseWriter, r *http.Request) {
 	if b.config.FilePath == "" || b.searchURL(reqBodyEncoded) != "" {
 		return
 	}
-	j := JSONfile{Uuid: strconv.Itoa(len(b.Urls) + 1), Short_url: reqBodyEncoded, Original_url: string(reqBody)}
+	j := JSONfile{Uuid: strconv.Itoa(len(b.Urls) + 1), Shorturl: reqBodyEncoded, Originalurl: string(reqBody)}
 	data, err := json.Marshal(j)
 	if err != nil {
 		panic(err)
@@ -138,7 +138,7 @@ func (b *BaseController) solveJSON(w http.ResponseWriter, r *http.Request) {
 	if b.config.FilePath == "" || b.searchURL(shorturl) != "" {
 		return
 	}
-	j := JSONfile{Uuid: strconv.Itoa(len(b.Urls) + 1), Short_url: shorturl, Original_url: jsonquery.URL}
+	j := JSONfile{Uuid: strconv.Itoa(len(b.Urls) + 1), Shorturl: shorturl, Originalurl: jsonquery.URL}
 	data, err := json.Marshal(j)
 	if err != nil {
 		panic(err)

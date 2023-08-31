@@ -27,7 +27,7 @@ func main() {
 		}
 		jon := app.JSONfile{}
 		json.Unmarshal(data, &jon)
-		controller.Urls[jon.Short_url] = jon.Original_url
+		controller.Urls[jon.Shorturl] = jon.Originalurl
 	}
 	file.Close()
 	r := chi.NewRouter()
