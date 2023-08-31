@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"fmt"
 	"github.com/Khucheee/alfredshortener.git/internal/app"
 	"github.com/go-chi/chi"
 	"net/http"
@@ -17,11 +18,16 @@ func main() {
 	controller := app.NewBaseController(*config, *logger)
 
 	file, err := os.OpenFile(config.FilePath, os.O_RDONLY|os.O_CREATE, 0666)
-
+	if err != nil {
+		fmt.Println(err)
+	}
 	text := bufio.NewReader(file)
 	var data []byte
 	for {
 		data, err = text.ReadBytes('\n')
+		if err != nil {
+			panic(err)
+		}
 		if len(data) == 0 {
 			break
 		}

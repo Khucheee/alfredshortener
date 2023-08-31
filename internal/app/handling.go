@@ -15,7 +15,7 @@ import (
 )
 
 type JSONfile struct {
-	Uuid        string `json:"uuid"`
+	UUID        string `json:"uuid"`
 	Shorturl    string `json:"short_url"`
 	Originalurl string `json:"original_url"`
 }
@@ -89,16 +89,19 @@ func (b *BaseController) solvePost(w http.ResponseWriter, r *http.Request) {
 	if b.config.FilePath == "" || b.searchURL(reqBodyEncoded) != "" {
 		return
 	}
-	j := JSONfile{Uuid: strconv.Itoa(len(b.Urls) + 1), Shorturl: reqBodyEncoded, Originalurl: string(reqBody)}
+	j := JSONfile{UUID: strconv.Itoa(len(b.Urls) + 1), Shorturl: reqBodyEncoded, Originalurl: string(reqBody)}
 	data, err := json.Marshal(j)
 	if err != nil {
 		panic(err)
 	}
 	data = append(data, '\n')
 	file, err := os.OpenFile(b.config.FilePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		panic(err)
+	}
 	_, err = file.Write(data)
 	if err != nil {
-		fmt.Println(err)
+		panic(err)
 	}
 	file.Close()
 	//запись в мапу
@@ -138,13 +141,16 @@ func (b *BaseController) solveJSON(w http.ResponseWriter, r *http.Request) {
 	if b.config.FilePath == "" || b.searchURL(shorturl) != "" {
 		return
 	}
-	j := JSONfile{Uuid: strconv.Itoa(len(b.Urls) + 1), Shorturl: shorturl, Originalurl: jsonquery.URL}
+	j := JSONfile{UUID: strconv.Itoa(len(b.Urls) + 1), Shorturl: shorturl, Originalurl: jsonquery.URL}
 	data, err := json.Marshal(j)
 	if err != nil {
 		panic(err)
 	}
 	data = append(data, '\n')
 	file, err := os.OpenFile(b.config.FilePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		panic(err)
+	}
 	_, err = file.Write(data)
 	if err != nil {
 		fmt.Println(err)
