@@ -33,7 +33,8 @@ func TestSolvePost(t *testing.T) {
 	}
 	for _, test := range tests {
 		cfg := Configure{"localhost:8080", "http://localhost:8080/"}
-		controller := NewBaseController(cfg)
+		str := Storage{Urls: make(map[string]string)}
+		controller := NewBaseController(cfg, str)
 		t.Run(test.name, func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("https://neal.fun/deep-sea/"))
 			w := httptest.NewRecorder()
@@ -83,7 +84,8 @@ func TestSolveGet(t *testing.T) {
 
 	for _, test := range tests {
 		cfg := Configure{"localhost:8080", "http://localhost:8080"}
-		controller := NewBaseController(cfg)
+		str := Storage{Urls: make(map[string]string)}
+		controller := NewBaseController(cfg, str)
 		t.Run(test.name, func(t *testing.T) {
 
 			req1 := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(test.body))

@@ -7,9 +7,10 @@ import (
 )
 
 func main() {
-	config := new(app.Configure)
+	config := new(app.Configure) //написть функцию для создания
 	config.SetConfig()
-	controller := app.NewBaseController(*config)
+	storage := app.Storage{Urls: make(map[string]string)}
+	controller := app.NewBaseController(*config, storage)
 	r := chi.NewRouter()
 	r.Mount("/", controller.Route())
 

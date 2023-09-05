@@ -7,24 +7,14 @@ import (
 	"net/http"
 )
 
+// контроллер для хендлеров
 type BaseController struct {
-	config Configure
-	urls   map[string]string //мапа содержит сокращенный урл и полный
+	config  Configure
+	storage Storage
 }
 
-func (b *BaseController) addURL(shorturl, url string) { //добавляем значение в мапу
-	b.urls[shorturl] = url
-}
-func (b *BaseController) searchURL(shorturl string) string { //ищем значение в мапе, если ""то не нашли
-	url := b.urls[shorturl]
-	return url
-}
-
-func NewBaseController(c Configure) *BaseController {
-	return &BaseController{
-		config: c,
-		urls:   make(map[string]string),
-	}
+func NewBaseController(c Configure, s Storage) *BaseController {
+	return &BaseController{config: c, storage: s}
 }
 
 func (b *BaseController) Route() *chi.Mux {
@@ -45,13 +35,14 @@ func (b *BaseController) solvePost(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	respBody := b.config.Address + reqBodyEncoded
 	w.Write([]byte(respBody))
-	b.addURL(reqBodyEncoded, string(reqBody))
+	b.storage.addURL(reqBodyEncoded, string(reqBody))
 }
+
 func (b *BaseController) solveGet(w http.ResponseWriter, r *http.Request) {
-	if b.searchURL(chi.URLParam(r, "shorturl")) == "" { //если ключ в мапе пустой, то 400
+	if b.storage.searchURL(chi.URLParam(r, "shorturl")) == "" { //если ключ в мапе пустой, то 400
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	w.Header().Set("Location", b.urls[chi.URLParam(r, "shorturl")]) //если дошли до сюда, то в location суем значение из мапы по ключу
+	w.Header().Set("Location", b.storage.Urls[chi.URLParam(r, "shorturl")]) //если дошли до сюда, то в location суем значение из мапы по ключу
 	w.WriteHeader(http.StatusTemporaryRedirect)
 }
