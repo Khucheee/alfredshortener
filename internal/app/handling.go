@@ -35,11 +35,11 @@ func (b *BaseController) solvePost(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	respBody := b.config.Address + reqBodyEncoded
 	w.Write([]byte(respBody))
-	b.storage.addURL(reqBodyEncoded, string(reqBody))
+	b.storage.AddURL(reqBodyEncoded, string(reqBody))
 }
 
 func (b *BaseController) solveGet(w http.ResponseWriter, r *http.Request) {
-	if b.storage.searchURL(chi.URLParam(r, "shorturl")) == "" { //если ключ в мапе пустой, то 400
+	if b.storage.SearchURL(chi.URLParam(r, "shorturl")) == "" { //если ключ в мапе пустой, то 400
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

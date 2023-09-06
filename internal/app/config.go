@@ -10,6 +10,10 @@ type Configure struct {
 	Address string
 }
 
+func NewConfig() *Configure {
+	return &Configure{Host: "", Address: ""}
+}
+
 func (c *Configure) SetConfig() {
 
 	flag.StringVar(&c.Host, "a", "localhost:8080", "for listenandserve")

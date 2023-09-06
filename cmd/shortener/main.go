@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	config := new(app.Configure) //написть функцию для создания
+	config := app.NewConfig()
 	config.SetConfig()
 	storage := app.Storage{Urls: make(map[string]string)}
 	controller := app.NewBaseController(*config, storage)
