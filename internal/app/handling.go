@@ -5,6 +5,7 @@ import (
 	"github.com/go-chi/chi"
 	"io"
 	"net/http"
+	"time"
 )
 
 // контроллер для хендлеров
@@ -45,4 +46,22 @@ func (b *BaseController) solveGet(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Location", b.storage.Urls[chi.URLParam(r, "shorturl")]) //если дошли до сюда, то в location суем значение из мапы по ключу
 	w.WriteHeader(http.StatusTemporaryRedirect)
+}
+
+func (b *BaseController) WithLogging(h http.HandlerFunc) http.HandlerFunc {
+	logfn := func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		responseData := &responseData{status: 0, size: 0}
+		lw := loggingResponseWriter{w, responseData}
+		h.ServeHTTP(&lw, r)
+		duration := time.Since(start)
+		b.logger.sugar.Infoln(
+			"URI", r.RequestURI,
+			"duration", duration,
+			"method", r.Method,
+			"status", responseData.status,
+			"size", responseData.size,
+			"storage", b.Urls)
+	}
+	return logfn
 }

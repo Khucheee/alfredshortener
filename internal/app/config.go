@@ -11,7 +11,7 @@ type Configure struct {
 }
 
 func NewConfig() *Configure {
-	return &Configure{Host: "", Address: ""}
+	return &Configure{}
 }
 
 func (c *Configure) SetConfig() {

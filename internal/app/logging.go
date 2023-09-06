@@ -21,6 +21,9 @@ type Logger struct {
 	sugar zap.SugaredLogger
 }
 
+func NewLogger() *Logger {
+	return &Logger{}
+}
 func (r *loggingResponseWriter) Write(b []byte) (int, error) {
 	// записываем ответ, используя оригинальный http.ResponseWriter
 	size, err := r.ResponseWriter.Write(b)
@@ -34,7 +37,7 @@ func (r *loggingResponseWriter) WriteHeader(statusCode int) {
 	r.responseData.status = statusCode // захватываем код статуса
 }
 
-func (l *Logger) CreateLogger() {
+func (l *Logger) CreateSuggarLogger() {
 	logger, err := zap.NewDevelopment()
 	if err != nil {
 		panic(err)

@@ -10,6 +10,7 @@ func main() {
 	config := app.NewConfig()
 	config.SetConfig()
 	storage := app.Storage{Urls: make(map[string]string)}
+	logger := app.NewLogger()
 	controller := app.NewBaseController(*config, storage)
 	r := chi.NewRouter()
 	r.Mount("/", controller.Route())
