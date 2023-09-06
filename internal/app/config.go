@@ -6,8 +6,9 @@ import (
 )
 
 type Configure struct {
-	Host    string
-	Address string
+	Host     string
+	Address  string
+	FilePath string
 }
 
 func NewConfig() *Configure {
@@ -15,9 +16,9 @@ func NewConfig() *Configure {
 }
 
 func (c *Configure) SetConfig() {
-
 	flag.StringVar(&c.Host, "a", "localhost:8080", "for listenandserve")
 	flag.StringVar(&c.Address, "b", "http://localhost:8080", "for response")
+	flag.StringVar(&c.FilePath, "f", "../../tmp/short-url-db.json", "for saving data")
 	flag.Parse()
 
 	serverAddress, isexist := os.LookupEnv("SERVER_ADDRESS")
@@ -29,5 +30,10 @@ func (c *Configure) SetConfig() {
 		c.Address = baseURL
 	}
 	c.Address += "/"
+
+	File, isexist := os.LookupEnv("FILE_STORAGE_PATH")
+	if isexist {
+		c.FilePath = File
+	}
 
 }

@@ -1,18 +1,12 @@
 package app
 
 type Storage struct {
-	Urls map[string]string //мапа содержит сокращенный урл и полный
-	//тут будет keeper
+	Urls   map[string]string //мапа содержит сокращенный урл и полный
+	keeper Keeper
 }
 
-func NewStorage() *Storage {
-	return &Storage{Urls: make(map[string]string)}
-}
-
-type Keeper interface {
-	AddURL(shorturl, url string)
-	SearchURL(shorturl string) string
-	//дожны быть мтеоды save принимает мапу возвращает ошибку/restore не принимает ничего отдает мапу
+func NewStorage(keeper Keeper) *Storage {
+	return &Storage{Urls: make(map[string]string), keeper: keeper}
 }
 
 func (s *Storage) AddURL(shorturl, url string) { //добавляем значение в мапу

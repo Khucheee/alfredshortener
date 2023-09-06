@@ -37,6 +37,7 @@ func (b *BaseController) solvePost(w http.ResponseWriter, r *http.Request) {
 	respBody := b.config.Address + reqBodyEncoded
 	w.Write([]byte(respBody))
 	b.storage.AddURL(reqBodyEncoded, string(reqBody))
+	b.storage.keeper.Save(b.storage.Urls, reqBodyEncoded, string(reqBody))
 }
 
 func (b *BaseController) solveGet(w http.ResponseWriter, r *http.Request) {
@@ -69,4 +70,5 @@ func (b *BaseController) solveJSON(w http.ResponseWriter, r *http.Request) {
 	resp, _ := json.Marshal(jsonresponse)
 	w.Write(resp)
 	b.storage.AddURL(shorturl, jsonquery.URL)
+	b.storage.keeper.Save(b.storage.Urls, shorturl, jsonquery.URL)
 }

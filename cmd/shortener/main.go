@@ -9,7 +9,14 @@ import (
 func main() {
 	config := app.NewConfig()
 	config.SetConfig()
-	storage := app.NewStorage()
+	keeper := app.NewKeeper(config.FilePath)
+	storage := app.NewStorage(keeper)
+	for {
+		if a, _ := keeper.Restore(); a == "" {
+			break
+		}
+		storage.AddURL(keeper.Restore())
+	}
 	logger := app.NewLogger()
 	logger.CreateSuggarLogger()
 	controller := app.NewBaseController(*config, *storage, *logger)
