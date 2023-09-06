@@ -5,6 +5,10 @@ type Storage struct {
 	//тут будет keeper
 }
 
+func NewStorage() *Storage {
+	return &Storage{Urls: make(map[string]string)}
+}
+
 type Keeper interface {
 	AddURL(shorturl, url string)
 	SearchURL(shorturl string) string

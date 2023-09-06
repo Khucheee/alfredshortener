@@ -12,17 +12,18 @@ import (
 type BaseController struct {
 	config  Configure
 	storage Storage
+	logger  Logger
 }
 
-func NewBaseController(c Configure, s Storage) *BaseController {
-	return &BaseController{config: c, storage: s}
+func NewBaseController(c Configure, s Storage, l Logger) *BaseController {
+	return &BaseController{config: c, storage: s, logger: l}
 }
 
 func (b *BaseController) Route() *chi.Mux {
 	r := chi.NewRouter()
 	r.Route("/", func(r chi.Router) {
-		r.Post("/", b.solvePost)
-		r.Get("/{shorturl}", b.solveGet)
+		r.Post("/", b.WithLogging(b.solvePost))
+		r.Get("/{shorturl}", b.WithLogging(b.solveGet))
 	})
 	return r
 }
@@ -61,7 +62,7 @@ func (b *BaseController) WithLogging(h http.HandlerFunc) http.HandlerFunc {
 			"method", r.Method,
 			"status", responseData.status,
 			"size", responseData.size,
-			"storage", b.Urls)
+			"storage", b.storage.Urls)
 	}
 	return logfn
 }

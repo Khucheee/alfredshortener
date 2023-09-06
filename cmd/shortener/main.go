@@ -9,9 +9,10 @@ import (
 func main() {
 	config := app.NewConfig()
 	config.SetConfig()
-	storage := app.Storage{Urls: make(map[string]string)}
+	storage := app.NewStorage()
 	logger := app.NewLogger()
-	controller := app.NewBaseController(*config, storage)
+	logger.CreateSuggarLogger()
+	controller := app.NewBaseController(*config, *storage, *logger)
 	r := chi.NewRouter()
 	r.Mount("/", controller.Route())
 
