@@ -1,11 +1,12 @@
 package app
 
 import (
+	"bytes"
+	"encoding/json"
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/go-chi/chi"
 	"io"
 	"net/http"
-	"time"
 )
 
 // контроллер для хендлеров
@@ -15,17 +16,15 @@ type BaseController struct {
 	logger  Logger
 }
 
-func NewBaseController(c Configure, s Storage, l Logger) *BaseController {
-	return &BaseController{config: c, storage: s, logger: l}
+type Jsonquery struct {
+	URL string
+}
+type Jsonresponse struct {
+	Response string `json:"result"`
 }
 
-func (b *BaseController) Route() *chi.Mux {
-	r := chi.NewRouter()
-	r.Route("/", func(r chi.Router) {
-		r.Post("/", b.WithLogging(b.solvePost))
-		r.Get("/{shorturl}", b.WithLogging(b.solveGet))
-	})
-	return r
+func NewBaseController(c Configure, s Storage, l Logger) *BaseController {
+	return &BaseController{config: c, storage: s, logger: l}
 }
 
 func (b *BaseController) solvePost(w http.ResponseWriter, r *http.Request) {
@@ -49,20 +48,25 @@ func (b *BaseController) solveGet(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusTemporaryRedirect)
 }
 
-func (b *BaseController) WithLogging(h http.HandlerFunc) http.HandlerFunc {
-	logfn := func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		responseData := &responseData{status: 0, size: 0}
-		lw := loggingResponseWriter{w, responseData}
-		h.ServeHTTP(&lw, r)
-		duration := time.Since(start)
-		b.logger.sugar.Infoln(
-			"URI", r.RequestURI,
-			"duration", duration,
-			"method", r.Method,
-			"status", responseData.status,
-			"size", responseData.size,
-			"storage", b.storage.Urls)
+func (b *BaseController) solveJSON(w http.ResponseWriter, r *http.Request) {
+	var jsonquery Jsonquery
+	var jsonresponse Jsonresponse
+	var buf bytes.Buffer
+	var shorturl string
+	_, err := buf.ReadFrom(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
-	return logfn
+	if err = json.Unmarshal(buf.Bytes(), &jsonquery); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	shorturl = base58.Encode([]byte(jsonquery.URL))
+	jsonresponse.Response = b.config.Address + shorturl
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	resp, _ := json.Marshal(jsonresponse)
+	w.Write(resp)
+	b.storage.AddURL(shorturl, jsonquery.URL)
 }
