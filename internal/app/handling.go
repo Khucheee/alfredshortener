@@ -36,18 +36,31 @@ func (b *BaseController) solvePost(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	respBody := b.config.Address + reqBodyEncoded
 	w.Write([]byte(respBody))
-	b.storage.keeper.Save(b.storage.Urls, reqBodyEncoded, string(reqBody))
-	b.storage.AddURL(reqBodyEncoded, string(reqBody))
-
+	if b.config.Dblink == "" {
+		b.storage.keeper.Save(b.storage.Urls, reqBodyEncoded, string(reqBody))
+		b.storage.AddURL(reqBodyEncoded, string(reqBody))
+		return
+	}
+	AddURLdb(reqBodyEncoded, string(reqBody), b.config)
 }
 
 func (b *BaseController) solveGet(w http.ResponseWriter, r *http.Request) {
-	if b.storage.SearchURL(chi.URLParam(r, "shorturl")) == "" { //если ключ в мапе пустой, то 400
+	if b.config.Dblink == "" {
+		if b.storage.SearchURL(chi.URLParam(r, "shorturl")) == "" { //если ключ в мапе пустой, то 400
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		w.Header().Set("Location", b.storage.Urls[chi.URLParam(r, "shorturl")]) //если дошли до сюда, то в location суем значение из мапы по ключу
+		w.WriteHeader(http.StatusTemporaryRedirect)
+		return
+	}
+	if GetUrldb(chi.URLParam(r, "shorturl"), b.config) == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	w.Header().Set("Location", b.storage.Urls[chi.URLParam(r, "shorturl")]) //если дошли до сюда, то в location суем значение из мапы по ключу
+	w.Header().Set("Location", GetUrldb(chi.URLParam(r, "shorturl"), b.config)) //если дошли до сюда, то в location суем значение из мапы по ключу
 	w.WriteHeader(http.StatusTemporaryRedirect)
+
 }
 
 func (b *BaseController) solveJSON(w http.ResponseWriter, r *http.Request) {
@@ -70,8 +83,13 @@ func (b *BaseController) solveJSON(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	resp, _ := json.Marshal(jsonresponse)
 	w.Write(resp)
-	b.storage.AddURL(shorturl, jsonquery.URL)
-	b.storage.keeper.Save(b.storage.Urls, shorturl, jsonquery.URL)
+
+	if b.config.Dblink == "" {
+		b.storage.AddURL(shorturl, jsonquery.URL)
+		b.storage.keeper.Save(b.storage.Urls, shorturl, jsonquery.URL)
+		return
+	}
+	AddURLdb(shorturl, jsonquery.URL, b.config)
 }
 
 func (b *BaseController) solvePing(w http.ResponseWriter, r *http.Request) {

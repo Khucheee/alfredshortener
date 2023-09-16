@@ -9,10 +9,13 @@ import (
 func main() {
 	config := app.NewConfig()
 	config.SetConfig()
+
 	keeper := app.NewKeeper(config.FilePath)
 	storage := app.NewStorage(keeper)
 	keeper.Restore(storage)
-
+	if config.Dblink != "" {
+		app.CreateTabledb(*config)
+	}
 	logger := app.NewLogger()
 	logger.CreateSuggarLogger()
 	controller := app.NewBaseController(*config, *storage, *logger)
