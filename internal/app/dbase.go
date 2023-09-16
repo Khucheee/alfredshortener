@@ -3,16 +3,12 @@ package app
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"time"
 )
 
 func DBconnect(c Configure) bool {
-	ps := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable",
-		c.Dblink, `postgres`, `ALFREd2002`, `alfredshortener`)
-
-	db, err := sql.Open("pgx", ps)
+	db, err := sql.Open("pgx", c.Dblink)
 	if err != nil {
 		panic(err)
 	}
