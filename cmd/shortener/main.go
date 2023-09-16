@@ -11,12 +11,8 @@ func main() {
 	config.SetConfig()
 	keeper := app.NewKeeper(config.FilePath)
 	storage := app.NewStorage(keeper)
-	for {
-		if a, _ := keeper.Restore(); a == "" {
-			break
-		}
-		storage.AddURL(keeper.Restore())
-	}
+	keeper.Restore(storage)
+
 	logger := app.NewLogger()
 	logger.CreateSuggarLogger()
 	controller := app.NewBaseController(*config, *storage, *logger)

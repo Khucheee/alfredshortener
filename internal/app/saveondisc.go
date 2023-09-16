@@ -18,7 +18,7 @@ type keeper struct {
 }
 type Keeper interface {
 	Save(map[string]string, string, string)
-	Restore() (string, string)
+	Restore(s *Storage)
 	//дожны быть мтеоды save принимает мапу возвращает ошибку/restore не принимает ничего отдает мапу
 }
 
@@ -32,7 +32,7 @@ func NewKeeper(filepath string) *keeper {
 }
 
 func (k *keeper) Save(foruuid map[string]string, shorturl string, originalurl string) {
-	if k.FileName == "" { //если название файла пустое, то сразу отдыхаем
+	if _, ok := foruuid[shorturl]; k.FileName == "" || ok == true { //если название файла пустое, то сразу отдыхаем
 		return
 	}
 	j := JSONfile{UUID: strconv.Itoa(len(foruuid) + 1), Shorturl: shorturl, Originalurl: originalurl} //собираем структуру для сборки jsonки
@@ -52,22 +52,24 @@ func (k *keeper) Save(foruuid map[string]string, shorturl string, originalurl st
 	file.Close() //закрываем малыша
 }
 
-func (k *keeper) Restore() (string, string) {
+func (k *keeper) Restore(s *Storage) {
 	file, err := os.OpenFile(k.FileName, os.O_RDONLY|os.O_CREATE, 0666) //открываю файл
 	if err != nil {
 		fmt.Println(err)
 	}
-	text := bufio.NewReader(file)    //сохраняю все его содержимое в переменную
-	var data []byte                  //создаю переменную для строк из файла
-	data, err = text.ReadBytes('\n') //засовываю в переменную строку из файла
-	if err != nil {
-		fmt.Println("no data", err)
+	text := bufio.NewReader(file) //сохраняю все его содержимое в переменную
+	var data []byte
+	for { //создаю переменную для строк из файла
+		data, err = text.ReadBytes('\n') //засовываю в переменную строку из файла
+		if err != nil {
+			fmt.Println("no data", err)
+		}
+		if len(data) == 0 { //если строка пустая, то перестаю читать
+			break
+		}
+		jon := JSONfile{}                       //если строка не пустая, то создаю структуру под неё
+		json.Unmarshal(data, &jon)              //парсю строку в эту структуру
+		file.Close()                            // закрываю малыша
+		s.AddURL(jon.Shorturl, jon.Originalurl) //добавляю в хранилище
 	}
-	if len(data) == 0 { //если строка пустая, то перестаю читать
-		return "", ""
-	}
-	jon := JSONfile{}          //если строка не пустая, то создаю структуру под неё
-	json.Unmarshal(data, &jon) //парсю строку в эту структуру
-	file.Close()               // закрываю малыша
-	return jon.Shorturl, jon.Originalurl
 }

@@ -32,7 +32,7 @@ func TestSolvePost(t *testing.T) {
 	},
 	}
 	for _, test := range tests {
-		cfg := Configure{"localhost:8080", "http://localhost:8080/", ""}
+		cfg := Configure{"localhost:8080", "http://localhost:8080/", "", "localhost"}
 		keepe := NewKeeper(cfg.FilePath)
 		str := Storage{make(map[string]string), keepe}
 		log := Logger{}
@@ -86,7 +86,7 @@ func TestSolveGet(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		cfg := Configure{"localhost:8080", "http://localhost:8080/", ""}
+		cfg := Configure{"localhost:8080", "http://localhost:8080/", "", "localhost"}
 		keepe := NewKeeper(cfg.FilePath)
 		str := Storage{make(map[string]string), keepe}
 		log := Logger{}
