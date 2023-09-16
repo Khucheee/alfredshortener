@@ -1,39 +1,30 @@
 package app
 
 import (
+	"bytes"
+	"encoding/json"
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/go-chi/chi"
 	"io"
 	"net/http"
 )
 
+// контроллер для хендлеров
 type BaseController struct {
-	config Configure
-	urls   map[string]string //мапа содержит сокращенный урл и полный
+	config  Configure
+	storage Storage
+	logger  Logger
 }
 
-func (b *BaseController) addURL(shorturl, url string) { //добавляем значение в мапу
-	b.urls[shorturl] = url
+type Jsonquery struct {
+	URL string
 }
-func (b *BaseController) searchURL(shorturl string) string { //ищем значение в мапе, если ""то не нашли
-	url := b.urls[shorturl]
-	return url
-}
-
-func NewBaseController(c Configure) *BaseController {
-	return &BaseController{
-		config: c,
-		urls:   make(map[string]string),
-	}
+type Jsonresponse struct {
+	Response string `json:"result"`
 }
 
-func (b *BaseController) Route() *chi.Mux {
-	r := chi.NewRouter()
-	r.Route("/", func(r chi.Router) {
-		r.Post("/", b.solvePost)
-		r.Get("/{shorturl}", b.solveGet)
-	})
-	return r
+func NewBaseController(c Configure, s Storage, l Logger) *BaseController {
+	return &BaseController{config: c, storage: s, logger: l}
 }
 
 func (b *BaseController) solvePost(w http.ResponseWriter, r *http.Request) {
@@ -45,13 +36,66 @@ func (b *BaseController) solvePost(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	respBody := b.config.Address + reqBodyEncoded
 	w.Write([]byte(respBody))
-	b.addURL(reqBodyEncoded, string(reqBody))
+	if b.config.Dblink == "" {
+		b.storage.keeper.Save(b.storage.Urls, reqBodyEncoded, string(reqBody))
+		b.storage.AddURL(reqBodyEncoded, string(reqBody))
+		return
+	}
+	AddURLdb(reqBodyEncoded, string(reqBody), b.config)
 }
+
 func (b *BaseController) solveGet(w http.ResponseWriter, r *http.Request) {
-	if b.searchURL(chi.URLParam(r, "shorturl")) == "" { //если ключ в мапе пустой, то 400
+	if b.config.Dblink == "" {
+		if b.storage.SearchURL(chi.URLParam(r, "shorturl")) == "" { //если ключ в мапе пустой, то 400
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		w.Header().Set("Location", b.storage.Urls[chi.URLParam(r, "shorturl")]) //если дошли до сюда, то в location суем значение из мапы по ключу
+		w.WriteHeader(http.StatusTemporaryRedirect)
+		return
+	}
+	if GetUrldb(chi.URLParam(r, "shorturl"), b.config) == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	w.Header().Set("Location", b.urls[chi.URLParam(r, "shorturl")]) //если дошли до сюда, то в location суем значение из мапы по ключу
+	w.Header().Set("Location", GetUrldb(chi.URLParam(r, "shorturl"), b.config)) //если дошли до сюда, то в location суем значение из мапы по ключу
 	w.WriteHeader(http.StatusTemporaryRedirect)
+
+}
+
+func (b *BaseController) solveJSON(w http.ResponseWriter, r *http.Request) {
+	var jsonquery Jsonquery
+	var jsonresponse Jsonresponse
+	var buf bytes.Buffer
+	var shorturl string
+	_, err := buf.ReadFrom(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if err = json.Unmarshal(buf.Bytes(), &jsonquery); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	shorturl = base58.Encode([]byte(jsonquery.URL))
+	jsonresponse.Response = b.config.Address + shorturl
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	resp, _ := json.Marshal(jsonresponse)
+	w.Write(resp)
+
+	if b.config.Dblink == "" {
+		b.storage.AddURL(shorturl, jsonquery.URL)
+		b.storage.keeper.Save(b.storage.Urls, shorturl, jsonquery.URL)
+		return
+	}
+	AddURLdb(shorturl, jsonquery.URL, b.config)
+}
+
+func (b *BaseController) solvePing(w http.ResponseWriter, r *http.Request) {
+	if DBconnect(b.config) {
+		w.WriteHeader(http.StatusOK)
+	} else {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }
