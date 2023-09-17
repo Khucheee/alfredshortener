@@ -132,8 +132,8 @@ func (b *BaseController) solveBatch(w http.ResponseWriter, r *http.Request) {
 		response.ShortURL = shorturl
 		surls = append(surls, response)
 		if b.config.Dblink == "" {
-			b.storage.AddURL(shorturl, request.OriginalURL)
 			b.storage.keeper.Save(b.storage.Urls, shorturl, request.OriginalURL)
+			b.storage.AddURL(shorturl, request.OriginalURL)
 			continue
 		}
 		AddURLdb(shorturl, request.OriginalURL, b.config)

@@ -32,7 +32,7 @@ func NewKeeper(filepath string) *keeper {
 }
 
 func (k *keeper) Save(foruuid map[string]string, shorturl string, originalurl string) {
-	if _, ok := foruuid[shorturl]; k.FileName == "" || ok { //если название файла пустое, то сразу отдыхаем
+	if _, ok := foruuid[shorturl]; k.FileName == "" || ok { //если название файла пустое или в мапе уже есть значение, то сразу отдыхаем
 		return
 	}
 	j := JSONfile{UUID: strconv.Itoa(len(foruuid) + 1), Shorturl: shorturl, Originalurl: originalurl} //собираем структуру для сборки jsonки
