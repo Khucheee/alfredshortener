@@ -43,9 +43,10 @@ func NewBaseController(c Configure, s Storage, l Logger) *BaseController {
 func (b *BaseController) solvePost(w http.ResponseWriter, r *http.Request) {
 	reqBody, _ := io.ReadAll(r.Body)
 	if shorturl := GetShortUrldb(string(reqBody), b.config); shorturl != "" {
+		respBody := b.config.Address + shorturl
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusConflict)
-		w.Write([]byte(shorturl))
+		w.Write([]byte(respBody))
 		return
 	}
 	w.Header().Set("Content-Type", "text/plain")
