@@ -129,7 +129,7 @@ func (b *BaseController) solveBatch(w http.ResponseWriter, r *http.Request) {
 	for _, request := range ourls {
 		shorturl := base58.Encode([]byte((request.OriginalURL)))
 		response.CorrelationID = request.CorrelationID
-		response.ShortURL = shorturl
+		response.ShortURL = b.config.Address + shorturl
 		surls = append(surls, response)
 		if b.config.Dblink == "" {
 			b.storage.keeper.Save(b.storage.Urls, shorturl, request.OriginalURL)
