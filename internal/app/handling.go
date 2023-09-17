@@ -16,11 +16,23 @@ type BaseController struct {
 	logger  Logger
 }
 
+// структуры для json хендлера
 type Jsonquery struct {
 	URL string
 }
 type Jsonresponse struct {
 	Response string `json:"result"`
+}
+
+// структуры для ручки batch
+type BatchRequest struct {
+	Correlation_id string `json:"correlation_id"`
+	Original_url   string `json:"original_url"`
+}
+
+type BatchResponse struct {
+	Correlation_id string `json:"correlation_id"`
+	Short_url      string `json:"short_url"`
 }
 
 func NewBaseController(c Configure, s Storage, l Logger) *BaseController {
@@ -98,4 +110,34 @@ func (b *BaseController) solvePing(w http.ResponseWriter, r *http.Request) {
 	} else {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
+}
+
+func (b *BaseController) solveBatch(w http.ResponseWriter, r *http.Request) {
+	var ourls = []BatchRequest{}
+	var surls = []BatchResponse{}
+	var response BatchResponse
+	var buf bytes.Buffer
+	_, err := buf.ReadFrom(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if err = json.Unmarshal(buf.Bytes(), &ourls); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	for _, request := range ourls {
+		shorturl := base58.Encode([]byte((request.Original_url)))
+		response.Correlation_id = request.Correlation_id
+		response.Short_url = shorturl
+		surls = append(surls, response)
+		if b.config.Dblink == "" {
+			b.storage.AddURL(shorturl, request.Original_url)
+			b.storage.keeper.Save(b.storage.Urls, shorturl, request.Original_url)
+			continue
+		}
+		AddURLdb(shorturl, request.Original_url, b.config)
+	}
+	resp, _ := json.Marshal(surls)
+	w.Write(resp)
 }
