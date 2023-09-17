@@ -7,9 +7,18 @@ import (
 )
 
 func main() {
-	config := new(app.Configure)
+	config := app.NewConfig()
 	config.SetConfig()
-	controller := app.NewBaseController(*config)
+
+	keeper := app.NewKeeper(config.FilePath)
+	storage := app.NewStorage(keeper)
+	keeper.Restore(storage)
+	if config.Dblink != "" {
+		app.CreateTabledb(*config)
+	}
+	logger := app.NewLogger()
+	logger.CreateSuggarLogger()
+	controller := app.NewBaseController(*config, *storage, *logger)
 	r := chi.NewRouter()
 	r.Mount("/", controller.Route())
 
