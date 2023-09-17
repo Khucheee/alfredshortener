@@ -3,6 +3,7 @@ package app
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/go-chi/chi"
 	"io"
@@ -40,9 +41,15 @@ func NewBaseController(c Configure, s Storage, l Logger) *BaseController {
 }
 
 func (b *BaseController) solvePost(w http.ResponseWriter, r *http.Request) {
+	reqBody, _ := io.ReadAll(r.Body)
+	if shorturl := GetShortUrldb(string(reqBody), b.config); shorturl != "" {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusConflict)
+		w.Write([]byte(shorturl))
+		return
+	}
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
-	reqBody, _ := io.ReadAll(r.Body)
 	reqBodyEncoded := base58.Encode(reqBody)
 
 	defer r.Body.Close()
@@ -53,7 +60,10 @@ func (b *BaseController) solvePost(w http.ResponseWriter, r *http.Request) {
 		b.storage.AddURL(reqBodyEncoded, string(reqBody))
 		return
 	}
-	AddURLdb(reqBodyEncoded, string(reqBody), b.config)
+	err := AddURLdb(reqBodyEncoded, string(reqBody), b.config)
+	if err != nil {
+		b.logger.sugar.Infoln(err)
+	}
 }
 
 func (b *BaseController) solveGet(w http.ResponseWriter, r *http.Request) {
@@ -66,11 +76,11 @@ func (b *BaseController) solveGet(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusTemporaryRedirect)
 		return
 	}
-	if GetUrldb(chi.URLParam(r, "shorturl"), b.config) == "" {
+	if GetOriginalUrldb(chi.URLParam(r, "shorturl"), b.config) == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	w.Header().Set("Location", GetUrldb(chi.URLParam(r, "shorturl"), b.config)) //если дошли до сюда, то в location суем значение из мапы по ключу
+	w.Header().Set("Location", GetOriginalUrldb(chi.URLParam(r, "shorturl"), b.config)) //если дошли до сюда, то в location суем значение из мапы по ключу
 	w.WriteHeader(http.StatusTemporaryRedirect)
 
 }
@@ -79,7 +89,6 @@ func (b *BaseController) solveJSON(w http.ResponseWriter, r *http.Request) {
 	var jsonquery Jsonquery
 	var jsonresponse Jsonresponse
 	var buf bytes.Buffer
-	var shorturl string
 	_, err := buf.ReadFrom(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -89,9 +98,17 @@ func (b *BaseController) solveJSON(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	shorturl = base58.Encode([]byte(jsonquery.URL))
-	jsonresponse.Response = b.config.Address + shorturl
 	w.Header().Set("Content-Type", "application/json")
+	if shorturl := GetShortUrldb(jsonquery.URL, b.config); shorturl != "" {
+		jsonresponse.Response = b.config.Address + shorturl
+		fmt.Println(shorturl)
+		resp, _ := json.Marshal(jsonresponse)
+		w.WriteHeader(http.StatusConflict)
+		w.Write(resp)
+		return
+	}
+	shorturl := base58.Encode([]byte(jsonquery.URL))
+	jsonresponse.Response = b.config.Address + shorturl
 	w.WriteHeader(http.StatusCreated)
 	resp, _ := json.Marshal(jsonresponse)
 	w.Write(resp)
