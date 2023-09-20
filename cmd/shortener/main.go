@@ -9,10 +9,10 @@ import (
 func main() {
 	config := app.NewConfig()
 	config.SetConfig()
-
-	keeper := app.NewKeeper(config.FilePath)
-	storage := app.NewStorage(keeper)
-	keeper.Restore(storage)
+	//в нью кипер кидаю конфиг и внутри выбираю какой кипер возвращать
+	keeper := app.NewKeeper(*config)
+	storage := app.NewStorage(*keeper)
+	storage.Restore()
 	if config.Dblink != "" {
 		app.CreateTabledb(*config)
 	}

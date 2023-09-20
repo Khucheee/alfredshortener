@@ -33,8 +33,8 @@ func TestSolvePost(t *testing.T) {
 	}
 	for _, test := range tests {
 		cfg := Configure{"localhost:8080", "http://localhost:8080/", "", ""}
-		keepe := NewKeeper(cfg.FilePath)
-		str := Storage{make(map[string]string), keepe}
+		keepe := NewKeeper(cfg)
+		str := Storage{make(map[string]string), *keepe}
 		log := Logger{}
 		log.CreateSuggarLogger()
 		controller := NewBaseController(cfg, str, log)
@@ -87,8 +87,8 @@ func TestSolveGet(t *testing.T) {
 
 	for _, test := range tests {
 		cfg := Configure{"localhost:8080", "http://localhost:8080/", "", ""}
-		keepe := NewKeeper(cfg.FilePath)
-		str := Storage{make(map[string]string), keepe}
+		keepe := NewKeeper(cfg)
+		str := Storage{make(map[string]string), *keepe}
 		log := Logger{}
 		controller := NewBaseController(cfg, str, log)
 		t.Run(test.name, func(t *testing.T) {

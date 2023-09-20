@@ -13,12 +13,13 @@ type JSONfile struct {
 	Shorturl    string `json:"short_url"`
 	Originalurl string `json:"original_url"`
 }
-type keeper struct {
-	FileName string
+type FileStorage struct {
+	path    string
+	counter int
 }
 type Keeper interface {
-	Save(map[string]string, string, string)
-	Restore(s *Storage)
+	Save(string, string)
+	Restore() map[string]string
 	//дожны быть мтеоды save принимает мапу возвращает ошибку/restore не принимает ничего отдает мапу
 }
 
@@ -27,21 +28,26 @@ type Keeper interface {
 сохранить
 */
 
-func NewKeeper(filepath string) *keeper {
-	return &keeper{FileName: filepath}
+func NewKeeper(c Configure) *Keeper {
+	var keeper Keeper
+	if c.Dblink == "" {
+		keeper = &FileStorage{path: c.FilePath, counter: 0}
+		return &keeper
+	}
+	keeper = &Database{link: c.Dblink}
+
+	return &keeper
 }
 
-func (k *keeper) Save(foruuid map[string]string, shorturl string, originalurl string) {
-	if _, ok := foruuid[shorturl]; k.FileName == "" || ok { //если название файла пустое или в мапе уже есть значение, то сразу отдыхаем
-		return
-	}
-	j := JSONfile{UUID: strconv.Itoa(len(foruuid) + 1), Shorturl: shorturl, Originalurl: originalurl} //собираем структуру для сборки jsonки
-	data, err := json.Marshal(j)                                                                      //собираем из нее jsonку
+func (k *FileStorage) Save(shorturl, originalurl string) {
+	k.counter += 1
+	j := JSONfile{UUID: strconv.Itoa(k.counter), Shorturl: shorturl, Originalurl: originalurl} //собираем структуру для сборки jsonки
+	data, err := json.Marshal(j)                                                               //собираем из нее jsonку
 	if err != nil {
 		panic(err)
 	}
-	data = append(data, '\n')                                                       //добавляем разделитель
-	file, err := os.OpenFile(k.FileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666) //открываем файл
+	data = append(data, '\n')                                                   //добавляем разделитель
+	file, err := os.OpenFile(k.path, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666) //открываем файл
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -52,13 +58,16 @@ func (k *keeper) Save(foruuid map[string]string, shorturl string, originalurl st
 	file.Close() //закрываем малыша
 }
 
-func (k *keeper) Restore(s *Storage) {
-	file, err := os.OpenFile(k.FileName, os.O_RDONLY|os.O_CREATE, 0666) //открываю файл
+// этот метод не должен ничего принимать
+// он должен вернуть мапу(или слайс когда то в будущем)
+func (k *FileStorage) Restore() map[string]string {
+	file, err := os.OpenFile(k.path, os.O_RDONLY|os.O_CREATE, 0666) //открываю файл
 	if err != nil {
 		fmt.Println(err)
 	}
 	text := bufio.NewReader(file) //сохраняю все его содержимое в переменную
 	var data []byte
+	var urls map[string]string
 	for { //создаю переменную для строк из файла
 		data, err = text.ReadBytes('\n') //засовываю в переменную строку из файла
 		if err != nil {
@@ -67,9 +76,10 @@ func (k *keeper) Restore(s *Storage) {
 		if len(data) == 0 { //если строка пустая, то перестаю читать
 			break
 		}
-		jon := JSONfile{}                       //если строка не пустая, то создаю структуру под неё
-		json.Unmarshal(data, &jon)              //парсю строку в эту структуру
-		file.Close()                            // закрываю малыша
-		s.AddURL(jon.Shorturl, jon.Originalurl) //добавляю в хранилище
+		jon := JSONfile{}                    //если строка не пустая, то создаю структуру под неё
+		json.Unmarshal(data, &jon)           //парсю строку в эту структуру
+		file.Close()                         // закрываю малыша
+		urls[jon.Shorturl] = jon.Originalurl //добавляю в хранилище
 	}
+	return urls
 }

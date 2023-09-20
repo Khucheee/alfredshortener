@@ -3,9 +3,18 @@ package app
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"time"
 )
+
+type dburls struct {
+	shorturl    string
+	originalurl string
+}
+type Database struct {
+	link string
+}
 
 func DBconnect(c Configure) bool {
 	db, err := sql.Open("pgx", c.Dblink)
@@ -20,6 +29,7 @@ func DBconnect(c Configure) bool {
 	}
 	return true
 }
+
 func CreateTabledb(c Configure) {
 	db, err := sql.Open("pgx", c.Dblink)
 	if err != nil {
@@ -33,20 +43,31 @@ func CreateTabledb(c Configure) {
 	}
 }
 
-func GetOriginalUrldb(shorturl string, c Configure) string {
-	db, err := sql.Open("pgx", c.Dblink)
+func (d *Database) Restore() map[string]string {
+	urls := make(map[string]string)
+	db, err := sql.Open("pgx", d.link)
 	if err != nil {
 		panic(err)
 	}
 	defer db.Close()
-	row := db.QueryRowContext(context.Background(),
-		"SELECT ORIGINAL_URL FROM URLS WHERE SHORT_URL=$1", shorturl)
-	var result string
-	row.Scan(&result)
-	return result
+	rows, err := db.QueryContext(context.Background(),
+		"SELECT SHORT_URL,ORIGINAL_URL FROM URLS")
+	if err != nil {
+		fmt.Println(err)
+	}
+	var tmp dburls
+	for rows.Next() {
+		err = rows.Scan(&tmp.shorturl, &tmp.originalurl)
+		if err != nil {
+			fmt.Println("Что-то упало на сканировании файла:", err)
+		}
+		urls[tmp.shorturl] = tmp.originalurl
+	}
+	return urls
 }
-func GetShortUrldb(originalurl string, c Configure) string {
-	db, err := sql.Open("pgx", c.Dblink)
+
+func (d *Database) GetShortUrldb(originalurl string) string {
+	db, err := sql.Open("pgx", d.link)
 	if err != nil {
 		panic(err)
 	}
@@ -57,15 +78,15 @@ func GetShortUrldb(originalurl string, c Configure) string {
 	row.Scan(&result)
 	return result
 }
-func AddURLdb(shorturl, originalurl string, c Configure) error {
-	db, err := sql.Open("pgx", c.Dblink)
+
+func (d *Database) Save(shorturl, originalurl string) {
+	db, err := sql.Open("pgx", d.link)
 	if err != nil {
 		panic(err)
 	}
 	defer db.Close()
 	_, err = db.ExecContext(context.Background(), "INSERT INTO URLS (short_url,original_url) VALUES($1,$2) ON CONFLICT (short_url) DO NOTHING", shorturl, originalurl)
 	if err != nil {
-		return err
+		fmt.Println("Что-то упало при сохранении в базу:", err)
 	}
-	return nil
 }
