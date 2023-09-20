@@ -108,7 +108,7 @@ func (b *BaseController) solveJSON(w http.ResponseWriter, r *http.Request) {
 }
 
 func (b *BaseController) solvePing(w http.ResponseWriter, r *http.Request) {
-	if DBconnect(b.config) {
+	if DBconnect(&b.config) {
 		w.WriteHeader(http.StatusOK)
 	} else {
 		w.WriteHeader(http.StatusInternalServerError)

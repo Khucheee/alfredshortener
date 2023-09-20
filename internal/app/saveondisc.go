@@ -61,6 +61,7 @@ func (k *FileStorage) Save(shorturl, originalurl string) {
 // этот метод не должен ничего принимать
 // он должен вернуть мапу(или слайс когда то в будущем)
 func (k *FileStorage) Restore() map[string]string {
+	fmt.Println("сработал метод рестор файла")
 	file, err := os.OpenFile(k.path, os.O_RDONLY|os.O_CREATE, 0666) //открываю файл
 	if err != nil {
 		fmt.Println(err)

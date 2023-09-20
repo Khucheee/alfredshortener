@@ -16,7 +16,7 @@ type Database struct {
 	link string
 }
 
-func DBconnect(c Configure) bool {
+func DBconnect(c *Configure) bool {
 	db, err := sql.Open("pgx", c.Dblink)
 	if err != nil {
 		panic(err)
@@ -30,7 +30,7 @@ func DBconnect(c Configure) bool {
 	return true
 }
 
-func CreateTabledb(c Configure) {
+func CreateTabledb(c *Configure) {
 	db, err := sql.Open("pgx", c.Dblink)
 	if err != nil {
 		panic(err)
@@ -44,6 +44,7 @@ func CreateTabledb(c Configure) {
 }
 
 func (d *Database) Restore() map[string]string {
+	fmt.Println("сработал метод рестор базы")
 	urls := make(map[string]string)
 	db, err := sql.Open("pgx", d.link)
 	if err != nil {
@@ -52,8 +53,10 @@ func (d *Database) Restore() map[string]string {
 	defer db.Close()
 	rows, err := db.QueryContext(context.Background(),
 		"SELECT SHORT_URL,ORIGINAL_URL FROM URLS")
+	fmt.Println("тут пустота", urls)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Это ошибка запроса урлов,вернется пустая мапа при восстановлении:", err)
+		return urls
 	}
 	var tmp dburls
 	for rows.Next() {

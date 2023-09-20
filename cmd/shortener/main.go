@@ -14,7 +14,7 @@ func main() {
 	storage := app.NewStorage(*keeper)
 	storage.Restore()
 	if config.Dblink != "" {
-		app.CreateTabledb(*config)
+		app.CreateTabledb(config)
 	}
 	logger := app.NewLogger()
 	logger.CreateSuggarLogger()
