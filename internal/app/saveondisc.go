@@ -67,7 +67,7 @@ func (k *FileStorage) Restore() map[string]string {
 	}
 	text := bufio.NewReader(file) //сохраняю все его содержимое в переменную
 	var data []byte
-	var urls map[string]string
+	urls := make(map[string]string)
 	for { //создаю переменную для строк из файла
 		data, err = text.ReadBytes('\n') //засовываю в переменную строку из файла
 		if err != nil {
