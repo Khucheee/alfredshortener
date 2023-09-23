@@ -72,7 +72,6 @@ func (b *BaseController) solveGet(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Location", b.storage.Urls[chi.URLParam(r, "shorturl")]) //если дошли до сюда, то в location суем значение из мапы по ключу
 	w.WriteHeader(http.StatusTemporaryRedirect)
-	return
 }
 
 func (b *BaseController) solveJSON(w http.ResponseWriter, r *http.Request) {

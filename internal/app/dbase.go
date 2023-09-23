@@ -53,10 +53,13 @@ func (d *Database) Restore() map[string]string {
 	defer db.Close()
 	rows, err := db.QueryContext(context.Background(),
 		"SELECT SHORT_URL,ORIGINAL_URL FROM URLS")
-	fmt.Println("тут пустота", urls)
 	if err != nil {
 		fmt.Println("Это ошибка запроса урлов,вернется пустая мапа при восстановлении:", err)
 		return urls
+	}
+	err = rows.Err()
+	if err != nil {
+		fmt.Println("Ошибка в чтении строк в таблице:", err)
 	}
 	var tmp dburls
 	for rows.Next() {
