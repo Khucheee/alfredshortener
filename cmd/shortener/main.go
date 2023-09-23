@@ -7,9 +7,18 @@ import (
 )
 
 func main() {
-	config := new(app.Configure)
+	config := app.NewConfig()
 	config.SetConfig()
-	controller := app.NewBaseController(*config)
+	//в нью кипер кидаю конфиг и внутри выбираю какой кипер возвращать
+	keeper := app.NewKeeper(*config)
+	storage := app.NewStorage(*keeper)
+	storage.Restore()
+	if config.Dblink != "" {
+		app.CreateTabledb(config)
+	}
+	logger := app.NewLogger()
+	logger.CreateSuggarLogger()
+	controller := app.NewBaseController(*config, *storage, *logger)
 	r := chi.NewRouter()
 	r.Mount("/", controller.Route())
 
