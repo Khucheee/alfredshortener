@@ -6,7 +6,7 @@ func (b *BaseController) Route() *chi.Mux {
 	r := chi.NewRouter()
 	r.Route("/", func(r chi.Router) {
 		r.Use(CookieMiddleware)
-		r.Post("/", (b.WithLogging(b.solvePost)))
+		r.Post("/", gzipMiddleware(b.WithLogging(b.solvePost)))
 		r.Get("/{shorturl}", gzipMiddleware(b.WithLogging(b.solveGet)))
 		r.Get("/ping", b.WithLogging(b.solvePing))
 		r.Post("/api/shorten", gzipMiddleware(b.WithLogging(b.solveJSON)))
