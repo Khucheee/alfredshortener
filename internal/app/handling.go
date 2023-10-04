@@ -3,6 +3,7 @@ package app
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/go-chi/chi"
 	"io"
@@ -153,11 +154,15 @@ func (b *BaseController) solveUserLinks(w http.ResponseWriter, r *http.Request) 
 	}
 	log.Printf("Handler.AllUserLinks got this uid: %#v \n", uid)
 
-	ulinks := b.storage.getbyuser(uid) //тут добываем урлы а как???
+	ulinks := b.storage.getbyuser(uid)
+
 	if len(ulinks) == 0 {
 		w.WriteHeader(http.StatusNoContent)
 	}
-
+	for i := 0; i < len(ulinks); i++ {
+		ulinks[i].Shorturl = b.config.Address + ulinks[i].Shorturl
+	}
+	fmt.Println(len(ulinks))
 	resp, err := json.Marshal(ulinks) //тут собираем их в jsonkу
 	if err != nil {
 		log.Printf("AllUserLinks: could not encode json \n %#v \n %#v \n\n", err, ulinks)
