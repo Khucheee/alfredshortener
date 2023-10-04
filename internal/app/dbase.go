@@ -143,11 +143,11 @@ func (d *Database) DeleteUserLinks(uid string, hashes []string) {
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println(uid)
 	defer db.Close()
 	dq := "UPDATE urls SET deleted=true WHERE user_id=$1 AND short_url=ANY($2::text[])"
 	params := "{" + strings.Join(hashes, ",") + "}"
-	_, err = db.ExecContext(context.Background(), dq,
-		uid, params)
+	_, err = db.ExecContext(context.Background(), dq, uid, params)
 	if err != nil {
 		log.Printf("DeleteUserLinks error: %#v \n", err)
 	}

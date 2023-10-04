@@ -18,7 +18,7 @@ func NewStorage(keeper Keeper) *Storage {
 }
 
 func (s *Storage) AddURL(shorturl, url, uuid string) { //добавляем значение в мапу
-	s.Urls[shorturl] = UrlData{originalurl: url, uuid: uuid}
+	s.Urls[shorturl] = UrlData{originalurl: url, uuid: uuid, isdeleted: false}
 	s.keeper.Save(shorturl, url, uuid)
 	//потом вызову save для keeper для сохранения на диск нового урла
 }

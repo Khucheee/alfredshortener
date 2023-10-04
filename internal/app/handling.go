@@ -193,6 +193,7 @@ func (b *BaseController) DeleteUserLinks(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "unreadable json data", http.StatusBadRequest)
 		return
 	}
+	fmt.Println(in)
 	b.storage.DeleteUserLinks(uid, in)
 	w.WriteHeader(http.StatusAccepted)
 }
