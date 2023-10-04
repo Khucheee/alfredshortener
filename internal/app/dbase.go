@@ -45,9 +45,9 @@ func CreateTabledb(c *Configure) {
 	}
 }
 
-func (d *Database) Restore() map[string]string {
+func (d *Database) Restore() map[string]UrlData {
 	fmt.Println("сработал метод рестор базы")
-	urls := make(map[string]string)
+	urls := make(map[string]UrlData)
 	db, err := sql.Open("pgx", d.link)
 	if err != nil {
 		panic(err)
@@ -69,7 +69,7 @@ func (d *Database) Restore() map[string]string {
 		if err != nil {
 			fmt.Println("Что-то упало на сканировании файла:", err)
 		}
-		urls[tmp.Shorturl] = tmp.Originalurl
+		urls[tmp.Shorturl] = UrlData{originalurl: tmp.Originalurl}
 	}
 	return urls
 }
