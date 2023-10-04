@@ -40,6 +40,10 @@ func TestSolvePost(t *testing.T) {
 		controller := NewBaseController(cfg, str, log)
 		t.Run(test.name, func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("https://neal.fun/deep-sea/"))
+			request.AddCookie(&http.Cookie{
+				Name:  "auth",
+				Value: "test",
+			})
 			w := httptest.NewRecorder()
 			controller.solvePost(w, request)
 
@@ -94,9 +98,17 @@ func TestSolveGet(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 
 			req1 := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(test.body))
+			req1.AddCookie(&http.Cookie{
+				Name:  "auth",
+				Value: "test",
+			})
 			w1 := httptest.NewRecorder()
 			controller.solvePost(w1, req1)
 			req2 := httptest.NewRequest(http.MethodGet, test.want.path, nil)
+			req2.AddCookie(&http.Cookie{
+				Name:  "auth",
+				Value: "test",
+			})
 			w2 := httptest.NewRecorder()
 
 			rctx := chi.NewRouteContext()
