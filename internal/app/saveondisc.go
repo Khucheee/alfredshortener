@@ -18,7 +18,7 @@ type FileStorage struct {
 }
 type Keeper interface {
 	Save(string, string, string) //теперь тут принимаем еще и uuid
-	Restore() map[string]UrlData
+	Restore() map[string]URLData
 	GetUrlsByUser(string) []Dburls //дожны быть мтеоды save принимает мапу возвращает ошибку/restore не принимает ничего отдает мапу
 	DeleteUserLinks(string, []string)
 }
@@ -61,7 +61,7 @@ func (k *FileStorage) Save(shorturl, originalurl, uuid string) {
 
 // этот метод не должен ничего принимать
 // он должен вернуть мапу(или слайс когда то в будущем)
-func (k *FileStorage) Restore() map[string]UrlData {
+func (k *FileStorage) Restore() map[string]URLData {
 	fmt.Println("сработал метод рестор файла")
 	file, err := os.OpenFile(k.path, os.O_RDONLY|os.O_CREATE, 0666) //открываю файл
 	if err != nil {
@@ -69,7 +69,7 @@ func (k *FileStorage) Restore() map[string]UrlData {
 	}
 	text := bufio.NewReader(file) //сохраняю все его содержимое в переменную
 	var data []byte
-	urls := make(map[string]UrlData)
+	urls := make(map[string]URLData)
 	for { //создаю переменную для строк из файла
 		data, err = text.ReadBytes('\n') //засовываю в переменную строку из файла
 		if err != nil {
@@ -81,7 +81,7 @@ func (k *FileStorage) Restore() map[string]UrlData {
 		jon := JSONfile{}                                          //если строка не пустая, то создаю структуру под неё
 		json.Unmarshal(data, &jon)                                 //парсю строку в эту структуру
 		file.Close()                                               // закрываю малыша
-		urls[jon.Shorturl] = UrlData{originalurl: jon.Originalurl} //добавляю в хранилище
+		urls[jon.Shorturl] = URLData{originalurl: jon.Originalurl} //добавляю в хранилище
 	}
 	return urls
 }
