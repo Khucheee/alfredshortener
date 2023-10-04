@@ -174,3 +174,22 @@ func (b *BaseController) solveUserLinks(w http.ResponseWriter, r *http.Request) 
 
 	w.Write(resp)
 }
+
+func (b *BaseController) DeleteUserLinks(w http.ResponseWriter, r *http.Request) {
+	uid, err := parseUserFromCookie(r)
+	if err != nil {
+		log.Printf("Handler.DeleteUserLinks error at parsing jwt-token: %#v \n", err)
+		http.Error(w, "Если кука не содержит ID пользователя", http.StatusUnauthorized)
+		return
+	}
+	log.Printf("Handler.DeleteUserLinks got this uid: %#v \n", uid)
+
+	in := []string{}
+	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+		log.Printf("Handler.DeleteUserLinks unreadable json data %#v \n", err)
+		http.Error(w, "unreadable json data", http.StatusBadRequest)
+		return
+	}
+	b.storage.DeleteUserLinks(uid, in)
+	w.WriteHeader(http.StatusAccepted)
+}

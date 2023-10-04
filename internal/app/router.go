@@ -12,6 +12,7 @@ func (b *BaseController) Route() *chi.Mux {
 		r.Post("/api/shorten", gzipMiddleware(b.WithLogging(b.solveJSON)))
 		r.Post("/api/shorten/batch", gzipMiddleware(b.WithLogging(b.solveBatch)))
 		r.Get("/api/user/urls", gzipMiddleware(b.WithLogging(b.solveUserLinks)))
+		r.Delete("/api/user/urls", gzipMiddleware(b.WithLogging(b.DeleteUserLinks)))
 	})
 	return r
 }

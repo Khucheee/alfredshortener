@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"log"
+	"strings"
 	"time"
 )
 
@@ -127,4 +129,19 @@ func (d *Database) GetUrlsByUser(uuid string) []Dburls {
 	}
 	fmt.Println("Тут должна быть структурура урлов", urls)
 	return urls
+}
+
+func (d *Database) DeleteUserLinks(uid string, hashes []string) {
+	db, err := sql.Open("pgx", d.link)
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+	dq := "UPDATE shortener SET deleted=true WHERE user_id=$1 AND hash=ANY($2::text[])"
+	params := "{" + strings.Join(hashes, ",") + "}"
+	_, err = db.ExecContext(context.Background(), dq,
+		uid, params)
+	if err != nil {
+		log.Printf("DeleteUserLinks error: %#v \n", err)
+	}
 }
