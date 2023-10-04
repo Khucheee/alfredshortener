@@ -144,7 +144,7 @@ func (d *Database) DeleteUserLinks(uid string, hashes []string) {
 		panic(err)
 	}
 	defer db.Close()
-	dq := "UPDATE shortener SET deleted=true WHERE user_id=$1 AND hash=ANY($2::text[])"
+	dq := "UPDATE urls SET deleted=true WHERE user_id=$1 AND short_url=ANY($2::text[])"
 	params := "{" + strings.Join(hashes, ",") + "}"
 	_, err = db.ExecContext(context.Background(), dq,
 		uid, params)
