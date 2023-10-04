@@ -44,5 +44,5 @@ func (s *Storage) getbyuser(uuid string) []Dburls {
 }
 func (s *Storage) DeleteUserLinks(uid string, in []string) {
 	s.keeper.DeleteUserLinks(uid, in)
-	s.keeper.Restore()
+	s.Urls = s.keeper.Restore()
 }
