@@ -20,7 +20,7 @@ func (c *Configure) SetConfig() {
 	flag.StringVar(&c.Host, "a", "localhost:8080", "for listenandserve")
 	flag.StringVar(&c.Address, "b", "http://localhost:8080", "for response")
 	flag.StringVar(&c.FilePath, "f", "../../tmp/short-url-db.json", "for saving data")
-	flag.StringVar(&c.Dblink, "d", "", "for database link")
+	flag.StringVar(&c.Dblink, "d", "host=localhost user=postgres password=ALFREd2002 dbname=alfredshortener sslmode=disable", "for database link")
 	flag.Parse()
 
 	serverAddress, isexist := os.LookupEnv("SERVER_ADDRESS")

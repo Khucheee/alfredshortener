@@ -8,9 +8,9 @@ import (
 	"time"
 )
 
-type dburls struct {
-	shorturl    string
-	originalurl string
+type Dburls struct {
+	Shorturl    string `json:"short_url"`
+	Originalurl string `json:"original_url"`
 }
 type Database struct {
 	link string
@@ -37,7 +37,7 @@ func CreateTabledb(c *Configure) {
 	}
 	defer db.Close()
 
-	_, err = db.ExecContext(context.Background(), "CREATE TABLE IF NOT EXISTS urls(short_url VARCHAR(255) PRIMARY KEY,original_url VARCHAR(255));")
+	_, err = db.ExecContext(context.Background(), "CREATE TABLE IF NOT EXISTS urls(user_id VARCHAR(36),short_url VARCHAR(255) PRIMARY KEY,original_url VARCHAR(255),deleted BOOLEAN);")
 	if err != nil {
 		panic(err)
 	}
@@ -61,13 +61,13 @@ func (d *Database) Restore() map[string]string {
 	if err != nil {
 		fmt.Println("Ошибка в чтении строк в таблице:", err)
 	}
-	var tmp dburls
+	var tmp Dburls
 	for rows.Next() {
-		err = rows.Scan(&tmp.shorturl, &tmp.originalurl)
+		err = rows.Scan(&tmp.Shorturl, &tmp.Originalurl)
 		if err != nil {
 			fmt.Println("Что-то упало на сканировании файла:", err)
 		}
-		urls[tmp.shorturl] = tmp.originalurl
+		urls[tmp.Shorturl] = tmp.Originalurl
 	}
 	return urls
 }
@@ -85,14 +85,46 @@ func (d *Database) GetShortUrldb(originalurl string) string {
 	return result
 }
 
-func (d *Database) Save(shorturl, originalurl string) {
+func (d *Database) Save(shorturl, originalurl, uuid string) {
 	db, err := sql.Open("pgx", d.link)
 	if err != nil {
 		panic(err)
 	}
 	defer db.Close()
-	_, err = db.ExecContext(context.Background(), "INSERT INTO URLS (short_url,original_url) VALUES($1,$2) ON CONFLICT (short_url) DO NOTHING", shorturl, originalurl)
+	_, err = db.ExecContext(context.Background(),
+		"INSERT INTO URLS (user_id,short_url,original_url)VALUES($1,$2,$3) ON CONFLICT (short_url) DO NOTHING",
+		uuid, shorturl, originalurl)
 	if err != nil {
 		fmt.Println("Что-то упало при сохранении в базу:", err)
 	}
+}
+
+func (d *Database) GetUrlsByUser(uuid string) []Dburls {
+	fmt.Println("сработал метод запроса урлов пользователя в базе")
+	urls := []Dburls{}
+	db, err := sql.Open("pgx", d.link)
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+	rows, err := db.QueryContext(context.Background(),
+		"SELECT SHORT_URL,ORIGINAL_URL FROM URLS WHERE user_id = $1", uuid)
+	if err != nil {
+		fmt.Println("Это ошибка запроса урлов пользователя", err)
+		return urls
+	}
+	err = rows.Err()
+	if err != nil {
+		fmt.Println("Ошибка в чтении строк в таблице:", err)
+	}
+	var tmp Dburls
+	for rows.Next() {
+		err = rows.Scan(&tmp.Shorturl, &tmp.Originalurl)
+		if err != nil {
+			fmt.Println("Что-то упало на сканировании файла:", err)
+		}
+		urls = append(urls, Dburls{tmp.Shorturl, tmp.Originalurl})
+	}
+	fmt.Println("Тут должна быть структурура урлов", urls)
+	return urls
 }

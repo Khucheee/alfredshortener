@@ -6,6 +6,7 @@ import (
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/go-chi/chi"
 	"io"
+	"log"
 	"net/http"
 )
 
@@ -55,14 +56,14 @@ func (b *BaseController) solvePost(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(respBody))
 		return
 	}
-
-	w.Header().Set("Content-Type", "text/plain")      //установили заголовок
-	w.WriteHeader(http.StatusCreated)                 //установили статускод
-	reqBodyEncoded := base58.Encode(reqBody)          //закодировали ссылку
-	defer r.Body.Close()                              //закрыли тело
-	respBody := b.config.Address + reqBodyEncoded     //собрали тело ответа
-	w.Write([]byte(respBody))                         //отправили его
-	b.storage.AddURL(reqBodyEncoded, string(reqBody)) //сохранили ссылку в мапу, а внутри дальше пойдет в сторадж
+	uid, _ := parseUserFromCookie(r)
+	w.Header().Set("Content-Type", "text/plain")           //установили заголовок
+	w.WriteHeader(http.StatusCreated)                      //установили статускод
+	reqBodyEncoded := base58.Encode(reqBody)               //закодировали ссылку
+	defer r.Body.Close()                                   //закрыли тело
+	respBody := b.config.Address + reqBodyEncoded          //собрали тело ответа
+	w.Write([]byte(respBody))                              //отправили его
+	b.storage.AddURL(reqBodyEncoded, string(reqBody), uid) //сохранили ссылку в мапу, а внутри дальше пойдет в сторадж
 }
 
 func (b *BaseController) solveGet(w http.ResponseWriter, r *http.Request) {
@@ -101,8 +102,9 @@ func (b *BaseController) solveJSON(w http.ResponseWriter, r *http.Request) {
 	jsonresponse.Response = b.config.Address + shorturl //собираем тело ответа
 	w.WriteHeader(http.StatusCreated)                   //устанавливаем статус код 201
 	resp, _ := json.Marshal(jsonresponse)               //парсим его в json
-	w.Write(resp)                                       //отправляем
-	b.storage.AddURL(shorturl, jsonquery.URL)           //сохраняем в мапу, а она внутри сохранит еще куда надо
+	w.Write(resp)
+	uid, _ := parseUserFromCookie(r)               //отправляем
+	b.storage.AddURL(shorturl, jsonquery.URL, uid) //сохраняем в мапу, а она внутри сохранит еще куда надо
 
 }
 
@@ -133,11 +135,37 @@ func (b *BaseController) solveBatch(w http.ResponseWriter, r *http.Request) {
 		response.CorrelationID = request.CorrelationID
 		response.ShortURL = b.config.Address + shorturl
 		surls = append(surls, response)
-		b.storage.AddURL(shorturl, request.OriginalURL)
+		uid, _ := parseUserFromCookie(r)
+		b.storage.AddURL(shorturl, request.OriginalURL, uid)
 	}
 
 	resp, _ := json.Marshal(surls)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
+	w.Write(resp)
+}
+
+func (b *BaseController) solveUserLinks(w http.ResponseWriter, r *http.Request) {
+	uid, err := parseUserFromCookie(r)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	log.Printf("Handler.AllUserLinks got this uid: %#v \n", uid)
+
+	ulinks := b.storage.getbyuser(uid) //тут добываем урлы а как???
+	if len(ulinks) == 0 {
+		w.WriteHeader(http.StatusNoContent)
+	}
+
+	resp, err := json.Marshal(ulinks) //тут собираем их в jsonkу
+	if err != nil {
+		log.Printf("AllUserLinks: could not encode json \n %#v \n %#v \n\n", err, ulinks)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	// json.NewEncoder(w).Encode(ulinks)
+
 	w.Write(resp)
 }

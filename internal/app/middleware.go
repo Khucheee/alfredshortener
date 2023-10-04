@@ -1,6 +1,7 @@
 package app
 
 import (
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -47,4 +48,21 @@ func gzipMiddleware(h http.HandlerFunc) http.HandlerFunc {
 		}
 		h.ServeHTTP(ow, r)
 	}
+}
+
+func CookieMiddleware(next http.Handler) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		_, err := r.Cookie("auth")
+		if err != nil {
+			newCookie, err := makeAuthCookie()
+			if err != nil {
+				log.Println("CookieMW: ошибка при создании jwt токена", err)
+				return
+			}
+			r.AddCookie(newCookie)
+			http.SetCookie(w, newCookie)
+		}
+		next.ServeHTTP(w, r)
+	}
+	return http.HandlerFunc(fn)
 }

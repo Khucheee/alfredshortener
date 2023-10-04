@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strconv"
 )
 
 type JSONfile struct {
@@ -18,9 +17,9 @@ type FileStorage struct {
 	counter int
 }
 type Keeper interface {
-	Save(string, string)
+	Save(string, string, string) //теперь тут принимаем еще и uuid
 	Restore() map[string]string
-	//дожны быть мтеоды save принимает мапу возвращает ошибку/restore не принимает ничего отдает мапу
+	GetUrlsByUser(string) []Dburls //дожны быть мтеоды save принимает мапу возвращает ошибку/restore не принимает ничего отдает мапу
 }
 
 /* надо создать файл
@@ -39,10 +38,11 @@ func NewKeeper(c Configure) *Keeper {
 	return &keeper
 }
 
-func (k *FileStorage) Save(shorturl, originalurl string) {
+func (k *FileStorage) Save(shorturl, originalurl, uuid string) {
 	k.counter += 1
-	j := JSONfile{UUID: strconv.Itoa(k.counter), Shorturl: shorturl, Originalurl: originalurl} //собираем структуру для сборки jsonки
-	data, err := json.Marshal(j)                                                               //собираем из нее jsonку
+	//strconv.Itoa(k.counter) раньше uuid так объявлялся
+	j := JSONfile{UUID: uuid, Shorturl: shorturl, Originalurl: originalurl} //собираем структуру для сборки jsonки
+	data, err := json.Marshal(j)                                            //собираем из нее jsonку
 	if err != nil {
 		panic(err)
 	}
@@ -83,4 +83,9 @@ func (k *FileStorage) Restore() map[string]string {
 		urls[jon.Shorturl] = jon.Originalurl //добавляю в хранилище
 	}
 	return urls
+}
+
+func (k *FileStorage) GetUrlsByUser(uuid string) []Dburls {
+	fmt.Println("Здесь еще нет реализации")
+	return []Dburls{}
 }
