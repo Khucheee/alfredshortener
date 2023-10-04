@@ -19,7 +19,8 @@ func (b *BaseController) WithLogging(h http.HandlerFunc) http.HandlerFunc {
 			"duration", duration,
 			"method", r.Method,
 			"status", responseData.status,
-			"size", responseData.size)
+			"size", responseData.size,
+			"storage", b.storage.Urls)
 	}
 	return logfn
 }
