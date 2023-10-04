@@ -108,6 +108,7 @@ func (d *Database) GetUrlsByUser(uuid string) []Dburls {
 	if err != nil {
 		panic(err)
 	}
+	//ff
 	defer db.Close()
 	rows, err := db.QueryContext(context.Background(),
 		"SELECT SHORT_URL,ORIGINAL_URL FROM URLS WHERE user_id = $1", uuid)
