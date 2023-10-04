@@ -39,7 +39,7 @@ func CreateTabledb(c *Configure) {
 	}
 	defer db.Close()
 
-	_, err = db.ExecContext(context.Background(), "CREATE TABLE IF NOT EXISTS urls(user_id VARCHAR(36),short_url VARCHAR(255) PRIMARY KEY,original_url VARCHAR(255),deleted BOOLEAN);")
+	_, err = db.ExecContext(context.Background(), "CREATE TABLE IF NOT EXISTS urls(user_id VARCHAR(36),short_url VARCHAR(255) PRIMARY KEY,original_url VARCHAR(255),deleted BOOLEAN DEFAULT false);")
 	if err != nil {
 		panic(err)
 	}
@@ -54,7 +54,7 @@ func (d *Database) Restore() map[string]UrlData {
 	}
 	defer db.Close()
 	rows, err := db.QueryContext(context.Background(),
-		"SELECT SHORT_URL,ORIGINAL_URL FROM URLS")
+		"SELECT USER_ID,SHORT_URL,ORIGINAL_URL,DELETED FROM URLS")
 	if err != nil {
 		fmt.Println("Это ошибка запроса урлов,вернется пустая мапа при восстановлении:", err)
 		return urls
@@ -64,12 +64,18 @@ func (d *Database) Restore() map[string]UrlData {
 		fmt.Println("Ошибка в чтении строк в таблице:", err)
 	}
 	var tmp Dburls
+	var isdeleted bool
+	var uuid string
 	for rows.Next() {
-		err = rows.Scan(&tmp.Shorturl, &tmp.Originalurl)
+		err = rows.Scan(&uuid, &tmp.Shorturl, &tmp.Originalurl, &isdeleted)
 		if err != nil {
 			fmt.Println("Что-то упало на сканировании файла:", err)
 		}
-		urls[tmp.Shorturl] = UrlData{originalurl: tmp.Originalurl}
+		urls[tmp.Shorturl] = UrlData{
+			originalurl: tmp.Originalurl,
+			uuid:        uuid,
+			isdeleted:   isdeleted,
+		}
 	}
 	return urls
 }
@@ -145,4 +151,5 @@ func (d *Database) DeleteUserLinks(uid string, hashes []string) {
 	if err != nil {
 		log.Printf("DeleteUserLinks error: %#v \n", err)
 	}
+
 }

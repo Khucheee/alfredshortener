@@ -5,7 +5,7 @@ import "github.com/btcsuite/btcutil/base58"
 type UrlData struct {
 	originalurl string
 	uuid        string
-	deleted     bool
+	isdeleted   bool
 }
 
 type Storage struct {
@@ -44,4 +44,5 @@ func (s *Storage) getbyuser(uuid string) []Dburls {
 }
 func (s *Storage) DeleteUserLinks(uid string, in []string) {
 	s.keeper.DeleteUserLinks(uid, in)
+	s.keeper.Restore()
 }

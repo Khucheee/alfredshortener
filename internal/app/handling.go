@@ -72,6 +72,9 @@ func (b *BaseController) solveGet(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	if b.storage.Urls[chi.URLParam(r, "shorturl")].isdeleted {
+		w.WriteHeader(http.StatusGone)
+	}
 	w.Header().Set("Location", b.storage.Urls[chi.URLParam(r, "shorturl")].originalurl) //если дошли до сюда, то в location суем значение из мапы по ключу
 	w.WriteHeader(http.StatusTemporaryRedirect)
 }
