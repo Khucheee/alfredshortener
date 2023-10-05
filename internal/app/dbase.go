@@ -16,6 +16,7 @@ type Dburls struct {
 }
 type Database struct {
 	link string
+	db   *sql.DB
 }
 
 func DBconnect(c *Configure) bool {
@@ -32,13 +33,12 @@ func DBconnect(c *Configure) bool {
 	return true
 }
 
-func CreateTabledb(c *Configure) {
-	db, err := sql.Open("pgx", c.Dblink)
+func (d *Database) CreateTabledb() {
+	db, err := sql.Open("pgx", d.link)
 	if err != nil {
 		panic(err)
 	}
-	defer db.Close()
-
+	d.db = db
 	_, err = db.ExecContext(context.Background(), "CREATE TABLE IF NOT EXISTS urls(user_id VARCHAR(36),short_url VARCHAR(255) PRIMARY KEY,original_url VARCHAR(255),deleted BOOLEAN DEFAULT false);")
 	if err != nil {
 		panic(err)
@@ -48,12 +48,7 @@ func CreateTabledb(c *Configure) {
 func (d *Database) Restore() map[string]URLData {
 	fmt.Println("сработал метод рестор базы")
 	urls := make(map[string]URLData)
-	db, err := sql.Open("pgx", d.link)
-	if err != nil {
-		panic(err)
-	}
-	defer db.Close()
-	rows, err := db.QueryContext(context.Background(),
+	rows, err := d.db.QueryContext(context.Background(),
 		"SELECT USER_ID,SHORT_URL,ORIGINAL_URL,DELETED FROM URLS")
 	if err != nil {
 		fmt.Println("Это ошибка запроса урлов,вернется пустая мапа при восстановлении:", err)
@@ -81,12 +76,7 @@ func (d *Database) Restore() map[string]URLData {
 }
 
 func (d *Database) GetShortUrldb(originalurl string) string {
-	db, err := sql.Open("pgx", d.link)
-	if err != nil {
-		panic(err)
-	}
-	defer db.Close()
-	row := db.QueryRowContext(context.Background(),
+	row := d.db.QueryRowContext(context.Background(),
 		"SELECT SHORT_URL FROM URLS WHERE ORIGINAL_URL=$1", originalurl)
 	var result string
 	row.Scan(&result)
@@ -94,12 +84,7 @@ func (d *Database) GetShortUrldb(originalurl string) string {
 }
 
 func (d *Database) Save(shorturl, originalurl, uuid string) {
-	db, err := sql.Open("pgx", d.link)
-	if err != nil {
-		panic(err)
-	}
-	defer db.Close()
-	_, err = db.ExecContext(context.Background(),
+	_, err := d.db.ExecContext(context.Background(),
 		"INSERT INTO URLS (user_id,short_url,original_url)VALUES($1,$2,$3) ON CONFLICT (short_url) DO NOTHING",
 		uuid, shorturl, originalurl)
 	if err != nil {
@@ -110,13 +95,7 @@ func (d *Database) Save(shorturl, originalurl, uuid string) {
 func (d *Database) GetUrlsByUser(uuid string) []Dburls {
 	fmt.Println("сработал метод запроса урлов пользователя в базе")
 	urls := []Dburls{}
-	db, err := sql.Open("pgx", d.link)
-	if err != nil {
-		panic(err)
-	}
-	//ff
-	defer db.Close()
-	rows, err := db.QueryContext(context.Background(),
+	rows, err := d.db.QueryContext(context.Background(),
 		"SELECT SHORT_URL,ORIGINAL_URL FROM URLS WHERE user_id = $1", uuid)
 	if err != nil {
 		fmt.Println("Это ошибка запроса урлов пользователя", err)
@@ -139,15 +118,9 @@ func (d *Database) GetUrlsByUser(uuid string) []Dburls {
 }
 
 func (d *Database) DeleteUserLinks(uid string, hashes []string) {
-	db, err := sql.Open("pgx", d.link)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(uid)
-	defer db.Close()
 	dq := "UPDATE urls SET deleted=true WHERE user_id=$1 AND short_url=ANY($2::text[])"
 	params := "{" + strings.Join(hashes, ",") + "}"
-	_, err = db.ExecContext(context.Background(), dq, uid, params)
+	_, err := d.db.ExecContext(context.Background(), dq, uid, params)
 	if err != nil {
 		log.Printf("DeleteUserLinks error: %#v \n", err)
 	}

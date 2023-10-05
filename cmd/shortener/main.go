@@ -13,9 +13,6 @@ func main() {
 	keeper := app.NewKeeper(*config)
 	storage := app.NewStorage(*keeper)
 	storage.Restore()
-	if config.Dblink != "" {
-		app.CreateTabledb(config)
-	}
 	logger := app.NewLogger()
 	logger.CreateSuggarLogger()
 	controller := app.NewBaseController(*config, *storage, *logger)

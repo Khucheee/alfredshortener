@@ -34,7 +34,9 @@ func NewKeeper(c Configure) *Keeper {
 		keeper = &FileStorage{path: c.FilePath, counter: 0}
 		return &keeper
 	}
-	keeper = &Database{link: c.Dblink}
+	db := &Database{link: c.Dblink}
+	db.CreateTabledb()
+	keeper = db
 
 	return &keeper
 }

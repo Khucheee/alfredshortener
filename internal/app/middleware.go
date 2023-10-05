@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func (b *BaseController) WithLogging(h http.HandlerFunc) http.HandlerFunc {
+func (b *BaseController) WithLogging(h http.Handler) http.Handler {
 	logfn := func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		responseData := &responseData{status: 0, size: 0}
@@ -22,11 +22,11 @@ func (b *BaseController) WithLogging(h http.HandlerFunc) http.HandlerFunc {
 			"size", responseData.size,
 			"storage", b.storage.Urls)
 	}
-	return logfn
+	return http.HandlerFunc(logfn)
 }
 
-func gzipMiddleware(h http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func gzipMiddleware(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ow := w
 		acceptEncoding := r.Header.Get("Accept-Encoding")
 		supportsGzip := strings.Contains(acceptEncoding, "gzip")
@@ -47,7 +47,7 @@ func gzipMiddleware(h http.HandlerFunc) http.HandlerFunc {
 			defer cr.Close()
 		}
 		h.ServeHTTP(ow, r)
-	}
+	})
 }
 
 func CookieMiddleware(next http.Handler) http.Handler {
