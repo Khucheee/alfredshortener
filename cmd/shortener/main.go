@@ -10,12 +10,15 @@ func main() {
 	config := app.NewConfig()
 	config.SetConfig()
 	//в нью кипер кидаю конфиг и внутри выбираю какой кипер возвращать
+	//ctx := context.Background()
+
 	keeper := app.NewKeeper(*config)
 	storage := app.NewStorage(*keeper)
-	storage.Restore()
+	//work := worker.NewWorker(storage)
 	logger := app.NewLogger()
 	logger.CreateSuggarLogger()
 	controller := app.NewBaseController(*config, *storage, *logger)
+	//work.start(ctx)
 	r := chi.NewRouter()
 	r.Mount("/", controller.Route())
 

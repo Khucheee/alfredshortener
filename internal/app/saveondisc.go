@@ -80,10 +80,10 @@ func (k *FileStorage) Restore() map[string]URLData {
 		if len(data) == 0 { //если строка пустая, то перестаю читать
 			break
 		}
-		jon := JSONfile{}                                          //если строка не пустая, то создаю структуру под неё
-		json.Unmarshal(data, &jon)                                 //парсю строку в эту структуру
-		file.Close()                                               // закрываю малыша
-		urls[jon.Shorturl] = URLData{originalurl: jon.Originalurl} //добавляю в хранилище
+		jon := JSONfile{}                                                                            //если строка не пустая, то создаю структуру под неё
+		json.Unmarshal(data, &jon)                                                                   //парсю строку в эту структуру
+		file.Close()                                                                                 // закрываю малыша
+		urls[jon.Shorturl] = URLData{originalurl: jon.Originalurl, uuid: jon.UUID, isdeleted: false} //добавляю в хранилище
 	}
 	return urls
 }
