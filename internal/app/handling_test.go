@@ -34,10 +34,11 @@ func TestSolvePost(t *testing.T) {
 	for _, test := range tests {
 		cfg := Configure{"localhost:8080", "http://localhost:8080/", "", ""}
 		keepe := NewKeeper(cfg)
-		str := Storage{make(map[string]URLData), *keepe}
+		str := NewStorage(*keepe)
+		wor := NewWorker(str)
 		log := Logger{}
 		log.CreateSuggarLogger()
-		controller := NewBaseController(cfg, str, log)
+		controller := NewBaseController(cfg, *str, log, wor)
 		t.Run(test.name, func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("https://neal.fun/deep-sea/"))
 			request.AddCookie(&http.Cookie{
@@ -92,9 +93,11 @@ func TestSolveGet(t *testing.T) {
 	for _, test := range tests {
 		cfg := Configure{"localhost:8080", "http://localhost:8080/", "", ""}
 		keepe := NewKeeper(cfg)
-		str := Storage{make(map[string]URLData), *keepe}
+		str := NewStorage(*keepe)
+		wor := NewWorker(str)
 		log := Logger{}
-		controller := NewBaseController(cfg, str, log)
+		log.CreateSuggarLogger()
+		controller := NewBaseController(cfg, *str, log, wor)
 		t.Run(test.name, func(t *testing.T) {
 
 			req1 := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(test.body))
