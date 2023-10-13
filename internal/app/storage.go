@@ -11,8 +11,9 @@ type URLData struct {
 }
 
 type Storage struct {
-	Urls   map[string]URLData //мапа содержит сокращенный урл и полный
-	keeper Keeper
+	Urls          map[string]URLData //мапа содержит сокращенный урл и полный
+	keeper        Keeper
+	workerChannel chan []string
 }
 
 func NewStorage(keeper Keeper) *Storage {
@@ -50,8 +51,9 @@ func (s *Storage) DeleteUserLinks(uid string, in []string) {
 		structura := s.Urls[hash]
 		structura.isdeleted = true
 		s.Urls[hash] = structura
+		mass := []string{uid, hash}
+		s.workerChannel <- mass
+		//s.keeper.DeleteUserLink(uid, hash)
 	}
-	//ниже старая реализация
-	s.keeper.DeleteUserLinks(uid, in)
-	//s.Urls = s.keeper.Restore() //а вот это уберу
+
 }

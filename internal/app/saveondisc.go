@@ -20,7 +20,7 @@ type Keeper interface {
 	Save(string, string, string) //теперь тут принимаем еще и uuid
 	Restore() map[string]URLData
 	GetUrlsByUser(string) []Dburls //дожны быть мтеоды save принимает мапу возвращает ошибку/restore не принимает ничего отдает мапу
-	DeleteUserLinks(string, []string)
+	DeleteUserLink(string, string)
 }
 
 /* надо создать файл
@@ -93,7 +93,7 @@ func (k *FileStorage) GetUrlsByUser(uuid string) []Dburls {
 		uuid)
 	return []Dburls{}
 }
-func (k *FileStorage) DeleteUserLinks(uuid string, urls []string) {
+func (k *FileStorage) DeleteUserLink(uuid string, urls string) {
 	fmt.Println("В файловом хранилище еще не появилась реализация удаления ссылок конкретного пользователя,переменные:",
 		uuid, urls)
 }

@@ -16,6 +16,7 @@ type BaseController struct {
 	config  Configure
 	storage Storage
 	logger  Logger
+	worker  Worker
 }
 
 // структуры для json хендлера
@@ -43,8 +44,8 @@ type BatchResponse struct {
 //интерфейс описывается там где используется!!!
 
 // теперь каким будет код: проверки на базу не нужны, проверки на пустоту файла внутри метода, то есть просто вызываем методы
-func NewBaseController(c Configure, s Storage, l Logger) *BaseController {
-	return &BaseController{config: c, storage: s, logger: l}
+func NewBaseController(c Configure, s Storage, l Logger, w Worker) *BaseController {
+	return &BaseController{config: c, storage: s, logger: l, worker: w}
 }
 
 func (b *BaseController) solvePost(w http.ResponseWriter, r *http.Request) {

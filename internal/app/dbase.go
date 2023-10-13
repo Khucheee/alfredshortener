@@ -6,7 +6,6 @@ import (
 	"fmt"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"log"
-	"strings"
 	"time"
 )
 
@@ -117,7 +116,17 @@ func (d *Database) GetUrlsByUser(uuid string) []Dburls {
 	return urls
 }
 
-func (d *Database) DeleteUserLinks(uid string, hashes []string) {
+func (d *Database) DeleteUserLink(uid string, hash string) {
+	dq := "UPDATE urls SET deleted=true WHERE user_id=$1 AND short_url=$2"
+	_, err := d.db.ExecContext(context.Background(), dq, uid, hash)
+	if err != nil {
+		log.Printf("DeleteUserLinks error: %#v \n", err)
+	}
+
+}
+
+//старая реализация
+/*func (d *Database) DeleteUserLinks(uid string, hashes []string) {
 	dq := "UPDATE urls SET deleted=true WHERE user_id=$1 AND short_url=ANY($2::text[])"
 	params := "{" + strings.Join(hashes, ",") + "}"
 	_, err := d.db.ExecContext(context.Background(), dq, uid, params)
@@ -126,3 +135,4 @@ func (d *Database) DeleteUserLinks(uid string, hashes []string) {
 	}
 
 }
+*/
