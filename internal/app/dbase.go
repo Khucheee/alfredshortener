@@ -9,8 +9,11 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"log"
+	"os"
 	"time"
 )
+
+const migrationFolder = "file://../../migrations/"
 
 type Dburls struct {
 	Shorturl    string `json:"short_url"`
@@ -44,13 +47,17 @@ func (d *Database) CreateTabledb() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	m, err := migrate.NewWithDatabaseInstance("file://../../migrations/", "postgres", driver)
-	fmt.Println(err)
+	os.Mkdir("мы находимся тут", 0755)
+	m, err := migrate.NewWithDatabaseInstance(migrationFolder, "postgres", driver)
+	if err != nil {
+		fmt.Println("Миграция упала на ошибке:", err)
+		d.db = db
+		return
+	}
 	err = m.Up()
 	if err != nil {
 		if err != migrate.ErrNoChange {
-			fmt.Println("Упала миграция", err)
+			fmt.Println("Упала миграция при поднятии", err)
 		}
 	}
 	d.db = db
