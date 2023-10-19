@@ -15,10 +15,10 @@ func main() {
 
 	keeper := app.NewKeeper(*config)
 	storage := app.NewStorage(*keeper)
-	work := app.NewWorker(storage)
+	work, channel := app.NewWorker(storage)
 	logger := app.NewLogger()
 	logger.CreateSuggarLogger()
-	controller := app.NewBaseController(*config, *storage, *logger, work)
+	controller := app.NewBaseController(*config, *storage, *logger, work, channel)
 	work.Start(ctx)
 	r := chi.NewRouter()
 	r.Mount("/", controller.Route())

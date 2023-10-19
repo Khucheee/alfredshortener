@@ -50,8 +50,8 @@ type ForDelete struct {
 //интерфейс описывается там где используется!!!
 
 // теперь каким будет код: проверки на базу не нужны, проверки на пустоту файла внутри метода, то есть просто вызываем методы
-func NewBaseController(c Configure, s Storage, l Logger, w Worker) *BaseController {
-	return &BaseController{config: c, storage: s, logger: l, worker: w}
+func NewBaseController(c Configure, s Storage, l Logger, w Worker, ch chan ForDelete) *BaseController {
+	return &BaseController{config: c, storage: s, logger: l, worker: w, workerChannel: ch}
 }
 
 func (b *BaseController) solvePost(w http.ResponseWriter, r *http.Request) {

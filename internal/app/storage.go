@@ -11,8 +11,8 @@ type URLData struct {
 }
 
 type Storage struct {
-	Urls          map[string]URLData //мапа содержит сокращенный урл и полный
-	keeper        Keeper
+	Urls   map[string]URLData //мапа содержит сокращенный урл и полный
+	keeper Keeper
 }
 
 func NewStorage(keeper Keeper) *Storage {
@@ -47,19 +47,18 @@ func (s *Storage) getbyuser(uuid string) []Dburls {
 func (s *Storage) DeleteUserLinks(uid string, in []string) {
 	//сначала удалю урл из памяти
 	for _, hash := range in {
-		structura := s.Urls[hash] //получаем из кэша данные по сокращенному урлу
-		if structura.uuid!=uid {//если этот урл не принадлежит пользователю, берем следующее значение
+		structura := s.Urls[hash]  //получаем из кэша данные по сокращенному урлу
+		if structura.uuid != uid { //если этот урл не принадлежит пользователю, берем следующее значение
 			continue
 		}
 		structura.isdeleted = true //отмечаем в них что урл удален
-		s.Urls[hash] = structura //записываем новые данные в кэш
+		s.Urls[hash] = structura   //записываем новые данные в кэш
 	}
 
 }
-func (s *Storage) DeleteUserLink(uid,hash string) {
-	s.keeper.DeleteUserLink(uid,hash )
-	}
-
+func (s *Storage) DeleteUserLink(uid, hash string) {
+	s.keeper.DeleteUserLink(uid, hash)
 }
+
 //либо в воркер прокидывать кипер
 //
