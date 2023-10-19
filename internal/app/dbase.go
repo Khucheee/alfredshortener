@@ -9,11 +9,10 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"log"
-	"os"
 	"time"
 )
 
-const migrationFolder = "file://../../migrations/"
+const migrationFolder = "file://migrations/"
 
 type Dburls struct {
 	Shorturl    string `json:"short_url"`
@@ -47,7 +46,6 @@ func (d *Database) CreateTabledb() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	os.Mkdir("мы находимся тут", 0755)
 	m, err := migrate.NewWithDatabaseInstance(migrationFolder, "postgres", driver)
 	if err != nil {
 		fmt.Println("Миграция упала на ошибке:", err)
@@ -61,8 +59,7 @@ func (d *Database) CreateTabledb() {
 		}
 	}
 	d.db = db
-	//_, err = db.ExecContext(context.Background(), "CREATE TABLE IF NOT EXISTS urls(user_id VARCHAR(36),short_url VARCHAR(255) PRIMARY KEY,original_url VARCHAR(255),deleted BOOLEAN DEFAULT false);")
-
+	_, err = db.ExecContext(context.Background(), "CREATE TABLE IF NOT EXISTS urls(user_id VARCHAR(36),short_url VARCHAR(255) PRIMARY KEY,original_url VARCHAR(255),deleted BOOLEAN DEFAULT false);")
 }
 
 func (d *Database) Restore() map[string]URLData {
