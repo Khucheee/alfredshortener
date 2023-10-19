@@ -45,8 +45,7 @@ func (d *Database) CreateTabledb() {
 		log.Fatal(err)
 	}
 
-	defer db.Close()
-	m, err := migrate.NewWithDatabaseInstance("file://../../internal/app/migrations/", "postgres", driver)
+	m, err := migrate.NewWithDatabaseInstance("file://../../migrations/", "postgres", driver)
 	fmt.Println(err)
 	err = m.Up()
 	if err != nil {
