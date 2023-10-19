@@ -1,15 +1,25 @@
 package main
 
 import (
+	"context"
 	"github.com/Khucheee/alfredshortener.git/internal/app"
 	"github.com/go-chi/chi"
 	"net/http"
 )
 
 func main() {
-	config := new(app.Configure)
+	config := app.NewConfig()
 	config.SetConfig()
-	controller := app.NewBaseController(*config)
+	//в нью кипер кидаю конфиг и внутри выбираю какой кипер возвращать
+	ctx := context.Background()
+
+	keeper := app.NewKeeper(*config)
+	storage := app.NewStorage(*keeper)
+	work, channel := app.NewWorker(storage)
+	logger := app.NewLogger()
+	logger.CreateSuggarLogger()
+	controller := app.NewBaseController(*config, *storage, *logger, work, channel)
+	work.Start(ctx)
 	r := chi.NewRouter()
 	r.Mount("/", controller.Route())
 

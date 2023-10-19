@@ -32,10 +32,19 @@ func TestSolvePost(t *testing.T) {
 	},
 	}
 	for _, test := range tests {
-		cfg := Configure{"localhost:8080", "http://localhost:8080/"}
-		controller := NewBaseController(cfg)
+		cfg := Configure{"localhost:8080", "http://localhost:8080/", "", ""}
+		keepe := NewKeeper(cfg)
+		str := NewStorage(*keepe)
+		wor, ch := NewWorker(str)
+		log := Logger{}
+		log.CreateSuggarLogger()
+		controller := NewBaseController(cfg, *str, log, wor, ch)
 		t.Run(test.name, func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("https://neal.fun/deep-sea/"))
+			request.AddCookie(&http.Cookie{
+				Name:  "auth",
+				Value: "test",
+			})
 			w := httptest.NewRecorder()
 			controller.solvePost(w, request)
 
@@ -82,14 +91,27 @@ func TestSolveGet(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		cfg := Configure{"localhost:8080", "http://localhost:8080"}
-		controller := NewBaseController(cfg)
+		cfg := Configure{"localhost:8080", "http://localhost:8080/", "", ""}
+		keepe := NewKeeper(cfg)
+		str := NewStorage(*keepe)
+		wor, ch := NewWorker(str)
+		log := Logger{}
+		log.CreateSuggarLogger()
+		controller := NewBaseController(cfg, *str, log, wor, ch)
 		t.Run(test.name, func(t *testing.T) {
 
 			req1 := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(test.body))
+			req1.AddCookie(&http.Cookie{
+				Name:  "auth",
+				Value: "test",
+			})
 			w1 := httptest.NewRecorder()
 			controller.solvePost(w1, req1)
 			req2 := httptest.NewRequest(http.MethodGet, test.want.path, nil)
+			req2.AddCookie(&http.Cookie{
+				Name:  "auth",
+				Value: "test",
+			})
 			w2 := httptest.NewRecorder()
 
 			rctx := chi.NewRouteContext()
