@@ -44,15 +44,15 @@ func (d *Database) CreateTabledb() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	defer db.Close()
 	m, err := migrate.NewWithDatabaseInstance("file://../../internal/app/migrations/", "postgres", driver)
 	fmt.Println(err)
 	err = m.Up()
 	if err != nil {
-		fmt.Println("Упала миграция", err)
-	}
-	if err != nil {
-		panic(err)
+		if err != migrate.ErrNoChange {
+			fmt.Println("Упала миграция", err)
+		}
 	}
 	d.db = db
 	//_, err = db.ExecContext(context.Background(), "CREATE TABLE IF NOT EXISTS urls(user_id VARCHAR(36),short_url VARCHAR(255) PRIMARY KEY,original_url VARCHAR(255),deleted BOOLEAN DEFAULT false);")
