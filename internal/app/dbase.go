@@ -4,15 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"log"
 	"time"
 )
 
-const migrationFolder = "file://migrations/"
+const migrationFolder = "file://migrations/mkmk"
 
 type Dburls struct {
 	Shorturl    string `json:"short_url"`
@@ -42,22 +40,22 @@ func (d *Database) CreateTabledb() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	driver, err := postgres.WithInstance(db, &postgres.Config{})
-	if err != nil {
-		log.Fatal(err)
-	}
-	m, err := migrate.NewWithDatabaseInstance(migrationFolder, "postgres", driver)
-	if err != nil {
-		fmt.Println("Миграция упала на ошибке:", err)
-		d.db = db
-		return
-	}
-	err = m.Up()
-	if err != nil {
-		if err != migrate.ErrNoChange {
-			fmt.Println("Упала миграция при поднятии", err)
+	/*
+		driver, err := postgres.WithInstance(db, &postgres.Config{})
+		if err != nil {
+			log.Fatal(err)
 		}
-	}
+		m, err := migrate.NewWithDatabaseInstance(migrationFolder, "postgres", driver)
+		if err != nil {
+			fmt.Println("Миграция упала на ошибке:", err)
+		}
+		err = m.Up()
+		if err != nil {
+			if err != migrate.ErrNoChange {
+				fmt.Println("Упала миграция при поднятии", err)
+			}
+		}
+	*/
 	d.db = db
 	_, err = db.ExecContext(context.Background(), "CREATE TABLE IF NOT EXISTS urls(user_id VARCHAR(36),short_url VARCHAR(255) PRIMARY KEY,original_url VARCHAR(255),deleted BOOLEAN DEFAULT false);")
 }
