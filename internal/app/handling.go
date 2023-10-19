@@ -13,10 +13,11 @@ import (
 
 // контроллер для хендлеров
 type BaseController struct {
-	config  Configure
-	storage Storage
-	logger  Logger
-	worker  Worker
+	config        Configure
+	storage       Storage
+	logger        Logger
+	worker        Worker
+	workerChannel chan ForDelete
 }
 
 // структуры для json хендлера
@@ -36,6 +37,11 @@ type BatchRequest struct {
 type BatchResponse struct {
 	CorrelationID string `json:"correlation_id"`
 	ShortURL      string `json:"short_url"`
+}
+
+type ForDelete struct {
+	uid  string
+	hash string
 }
 
 //storage должен быть интерфейсом!
@@ -196,5 +202,9 @@ func (b *BaseController) DeleteUserLinks(w http.ResponseWriter, r *http.Request)
 	}
 	fmt.Println(in)
 	b.storage.DeleteUserLinks(uid, in)
+	for _, hash := range in {
+		fordelete := ForDelete{uid, hash}
+		b.workerChannel <- fordelete
+	}
 	w.WriteHeader(http.StatusAccepted)
 }

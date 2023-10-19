@@ -4,6 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"log"
 	"time"
@@ -35,13 +38,25 @@ func DBconnect(c *Configure) bool {
 func (d *Database) CreateTabledb() {
 	db, err := sql.Open("pgx", d.link)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
-	d.db = db
-	_, err = db.ExecContext(context.Background(), "CREATE TABLE IF NOT EXISTS urls(user_id VARCHAR(36),short_url VARCHAR(255) PRIMARY KEY,original_url VARCHAR(255),deleted BOOLEAN DEFAULT false);")
+	driver, err := postgres.WithInstance(db, &postgres.Config{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+	m, err := migrate.NewWithDatabaseInstance("file://../../internal/app/migrations/", "postgres", driver)
+	fmt.Println(err)
+	err = m.Up()
+	if err != nil {
+		fmt.Println("Упала миграция", err)
+	}
 	if err != nil {
 		panic(err)
 	}
+	d.db = db
+	//_, err = db.ExecContext(context.Background(), "CREATE TABLE IF NOT EXISTS urls(user_id VARCHAR(36),short_url VARCHAR(255) PRIMARY KEY,original_url VARCHAR(255),deleted BOOLEAN DEFAULT false);")
+
 }
 
 func (d *Database) Restore() map[string]URLData {

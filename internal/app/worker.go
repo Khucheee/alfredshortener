@@ -10,8 +10,8 @@ import (
 type worker struct {
 	wg         *sync.WaitGroup
 	cancelFunc context.CancelFunc
-	storage    *Storage
-	toProcess  chan []string
+	controller *BaseController
+	toProcess  chan ForDelete
 }
 
 type Worker interface {
@@ -19,13 +19,13 @@ type Worker interface {
 	Stop()
 }
 
-func NewWorker(storage *Storage) Worker {
+func NewWorker(controller *BaseController) Worker {
 	w := worker{
-		wg:        new(sync.WaitGroup),
-		storage:   storage,
-		toProcess: make(chan []string),
+		wg:         new(sync.WaitGroup),
+		controller: controller,
+		toProcess:  make(chan ForDelete),
 	}
-	w.storage.workerChannel = w.toProcess
+	w.controller.workerChannel = w.toProcess
 	return &w
 }
 func (w *worker) Start(pctx context.Context) {
@@ -51,8 +51,7 @@ func (w *worker) spawnWorkers(ctx context.Context) {
 			return
 		case value := <-w.toProcess:
 			fmt.Println("Произошло чтение из канала, получены значения:", value)
-			w.storage.keeper.DeleteUserLink(value[0], value[1])
-
+			w.controller.storage.DeleteUserLink(value.uid, value.hash)
 		}
 	}
 }
